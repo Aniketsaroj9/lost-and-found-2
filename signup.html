@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign Up • Lost &amp; Found Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+    <div class="auth-page">
+        <a class="brand" href="index.html">Lost &amp; Found</a>
+
+        <main class="auth-wrapper">
+            <section class="auth-card">
+                <header class="auth-card__header">
+                    <p class="eyebrow">Create account</p>
+                    <h1>Join the Lost &amp; Found network</h1>
+                    <p class="muted">Report, track, and recover belongings with campus-wide visibility.</p>
+                </header>
+
+                <form class="auth-form" id="signupFormAuth">
+                    <label>Full Name
+                        <input type="text" name="fullName" placeholder="Alex Parker" required />
+                    </label>
+                    <label>University Email
+                        <input type="email" name="email" placeholder="you@university.edu" required />
+                    </label>
+                    <label>Password
+                        <input type="password" name="password" placeholder="Create password" required minlength="6" />
+                    </label>
+                    <label>Confirm Password
+                        <input type="password" name="confirmPassword" placeholder="Repeat password" required minlength="6" />
+                    </label>
+
+                    <button type="submit" class="btn">Sign Up</button>
+                    <p class="form-status" aria-live="polite"></p>
+                </form>
+
+                <p class="muted center">Already have an account?
+                    <a href="login.html" class="text-link">Login</a>
+                </p>
+            </section>
+        </main>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>

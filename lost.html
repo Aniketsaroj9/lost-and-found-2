@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report Lost Item • Lost &amp; Found Portal</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+
+<body data-require-auth-page="true">
+    <header class="site-header">
+        <div class="container nav">
+            <div class="logo">Lost &amp; Found</div>
+            <nav class="nav-links" id="navLinks">
+                <a href="index.html#home">Home</a>
+                <a href="index.html#browse">Browse</a>
+                <a href="index.html#contact">Contact</a>
+                <a href="dashboard.html" data-auth-visible="user">Dashboard</a>
+                <button type="button" class="btn btn-outline nav-logout" id="logoutBtn" data-auth-visible="user">Logout</button>
+            </nav>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero" id="lost-hero">
+            <div class="container hero-grid">
+                <div class="hero-text">
+                    <p class="eyebrow">Report Lost Item</p>
+                    <h1>Tell us what went missing</h1>
+                    <p class="subtitle">Share clear details so campus staff and fellow students can help you recover it quickly.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container form-grid">
+                <div>
+                    <h2>Lost item details</h2>
+                    <p class="section-description">The more specifics you provide (serial numbers, marks, etc.), the faster we can match your report.</p>
+                </div>
+                <form class="form" id="lostForm">
+                    <label>Item Name
+                        <input type="text" name="itemName" required />
+                    </label>
+                    <label>Category
+                        <select name="category" required>
+                            <option value="">Select category</option>
+                            <option>Electronics</option>
+                            <option>Accessories</option>
+                            <option>Books</option>
+                            <option>Cards &amp; IDs</option>
+                            <option>Others</option>
+                        </select>
+                    </label>
+                    <label>Description
+                        <textarea name="description" rows="3" required></textarea>
+                    </label>
+                    <label>Location
+                        <input type="text" name="location" required />
+                    </label>
+                    <label>Date &amp; Time
+                        <input type="datetime-local" name="datetime" required />
+                    </label>
+                    <label class="file-input">Upload Image
+                        <input type="file" name="image" accept="image/*" />
+                    </label>
+                    <button type="submit" class="btn">Submit Lost Report</button>
+                    <p class="form-status" aria-live="polite"></p>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-grid">
+            <div>
+                <div class="logo">Lost &amp; Found</div>
+                <p class="muted">Track, report, and recover belongings campus-wide.</p>
+            </div>
+            <div class="footer-links">
+                <a href="index.html#features">Features</a>
+                <a href="index.html#browse">Browse</a>
+                <a href="index.html#contact">Contact</a>
+            </div>
+            <div class="footer-meta">© <span id="year"></span> Lost &amp; Found Portal</div>
+        </div>
+    </footer>
+
+    <script src="script.js?v=2"></script>
+</body>
+
+</html>

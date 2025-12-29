@@ -1,0 +1,17 @@
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+/logs/
+*.log
+
+# User Uploads (Don't commit user data)
+/uploads/
+!/uploads/.gitkeep
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp

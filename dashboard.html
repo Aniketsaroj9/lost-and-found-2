@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard • Lost &amp; Found Portal</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+
+<body data-require-auth-page="true">
+    <header class="site-header">
+        <div class="container nav">
+            <div class="logo">Lost &amp; Found</div>
+            <nav class="nav-links" id="navLinks">
+                <a href="index.html#home">Home</a>
+                <a href="index.html#browse">Browse</a>
+                <a href="index.html#contact">Contact</a>
+                <a href="dashboard.html" data-auth-visible="user">Dashboard</a>
+                <button type="button" class="btn btn-outline nav-logout" id="logoutBtn"
+                    data-auth-visible="user">Logout</button>
+            </nav>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="dashboard-hero section">
+            <div class="container dashboard-hero__grid">
+                <div>
+                    <p class="eyebrow">Welcome back</p>
+                    <h1>Your lost &amp; found command center</h1>
+                    <p class="subtitle">Track your reports, monitor matches, and stay updated on campus recoveries.</p>
+                    <div class="hero-actions">
+                        <a href="lost.html" class="btn">Report Lost Item</a>
+                        <a href="found.html" class="btn btn-secondary">Report Found Item</a>
+                    </div>
+                </div>
+                <article class="summary-card">
+                    <header>
+                        <p class="muted">Today&apos;s Snapshot</p>
+                        <h3>Campus pulse</h3>
+                    </header>
+                    <div class="summary-stats">
+                        <div>
+                            <p class="summary-label">Open Reports</p>
+                            <p class="summary-value">12</p>
+                        </div>
+                        <div>
+                            <p class="summary-label">Matches in Review</p>
+                            <p class="summary-value">4</p>
+                        </div>
+                        <div>
+                            <p class="summary-label">Awaiting Pickup</p>
+                            <p class="summary-value">3</p>
+                        </div>
+                    </div>
+                    <p class="muted">Updated 5 minutes ago</p>
+                </article>
+            </div>
+        </section>
+
+        <section class="section" id="dashboard-metrics">
+            <div class="container">
+                <div class="dashboard-grid">
+                    <article class="metric-card">
+                        <p class="metric-label">Reports filed by you</p>
+                        <p class="metric-value">6</p>
+                        <span class="metric-trend positive">+1 new this week</span>
+                    </article>
+                    <article class="metric-card">
+                        <p class="metric-label">Resolved cases</p>
+                        <p class="metric-value">3</p>
+                        <span class="metric-trend neutral">On track</span>
+                    </article>
+                    <article class="metric-card">
+                        <p class="metric-label">Pending verifications</p>
+                        <p class="metric-value">2</p>
+                        <span class="metric-trend warning">Action needed</span>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="section alt">
+            <div class="container dashboard-panels">
+                <article class="panel-card">
+                    <header class="panel-header">
+                        <h3>Recent activity</h3>
+                        <a href="index.html#browse" class="text-link">View feed</a>
+                    </header>
+                    <ul class="activity-list">
+                        <li>
+                            <div>
+                                <p class="activity-title">Noise Cancelling Headphones</p>
+                                <p class="muted">Match found • Engineering Block</p>
+                            </div>
+                            <span class="status-badge success">Matched</span>
+                        </li>
+                        <li>
+                            <div>
+                                <p class="activity-title">Leather Wallet</p>
+                                <p class="muted">Awaiting verification • Central Lawn</p>
+                            </div>
+                            <span class="status-badge warning">Pending</span>
+                        </li>
+                        <li>
+                            <div>
+                                <p class="activity-title">Student ID Card</p>
+                                <p class="muted">Ready for pickup • Campus security</p>
+                            </div>
+                            <span class="status-badge info">Ready</span>
+                        </li>
+                    </ul>
+                </article>
+
+                <article class="panel-card">
+                    <header class="panel-header">
+                        <h3>Quick actions</h3>
+                    </header>
+                    <div class="quick-actions">
+                        <a href="lost.html" class="quick-action-card">
+                            <h4>Report lost item</h4>
+                            <p>Share detailed info and alerts are sent instantly.</p>
+                        </a>
+                        <a href="found.html" class="quick-action-card">
+                            <h4>Report found item</h4>
+                            <p>Log secure pickup notes for owners.</p>
+                        </a>
+                        <a href="index.html#browse" class="quick-action-card">
+                            <h4>Browse matches</h4>
+                            <p>Filter the live feed for related reports.</p>
+                        </a>
+                    </div>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-grid">
+            <div>
+                <div class="logo">Lost &amp; Found</div>
+                <p class="muted">Built for modern campuses. Track and recover belongings in minutes.</p>
+            </div>
+            <div class="footer-links">
+                <a href="index.html#home">Home</a>
+                <a href="index.html#features">Features</a>
+                <a href="index.html#browse">Browse</a>
+                <a href="index.html#contact">Contact</a>
+            </div>
+            <div class="footer-meta">© <span id="year"></span> Lost &amp; Found Portal</div>
+        </div>
+    </footer>
+
+    <script src="script.js?v=2"></script>
+</body>
+
+</html>

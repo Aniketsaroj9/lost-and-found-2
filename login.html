@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login • Lost &amp; Found Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+    <div class="auth-page">
+        <a class="brand" href="index.html">Lost &amp; Found</a>
+
+        <main class="auth-wrapper">
+            <section class="auth-card">
+                <header class="auth-card__header">
+                    <p class="eyebrow">Welcome back</p>
+                    <h1>Login to your account</h1>
+                    <p class="muted">Access your dashboard to track reports, matches, and notifications.</p>
+                </header>
+
+                <form class="auth-form" id="loginFormAuth">
+                    <label>Email address
+                        <input type="email" name="email" placeholder="you@university.edu" required />
+                    </label>
+                    <label>Password
+                        <input type="password" name="password" placeholder="Enter password" required minlength="6" />
+                    </label>
+
+                    <div class="auth-form__meta">
+                        <a href="#" class="text-link">Forgot Password?</a>
+                    </div>
+
+                    <button type="submit" class="btn">Login</button>
+                    <p class="form-status" aria-live="polite"></p>
+                </form>
+
+                <p class="muted center">Don’t have an account?
+                    <a href="signup.html" class="text-link">Sign Up</a>
+                </p>
+            </section>
+        </main>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>
