@@ -19,8 +19,40 @@
                 <a href="index.html#home">Home</a>
                 <a href="index.html#browse">Browse</a>
                 <a href="index.html#contact">Contact</a>
-                <a href="dashboard.html" data-auth-visible="user">Dashboard</a>
-                <button type="button" class="btn btn-outline nav-logout" id="logoutBtn" data-auth-visible="user">Logout</button>
+                <div class="user-menu" data-auth-visible="user">
+                    <button class="user-menu-trigger" id="userMenuTrigger">
+                        <div class="user-avatar">
+                            <span class="avatar-text">JD</span>
+                        </div>
+                        <svg class="chevron-down" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <div class="dropdown-avatar">
+                                <span class="avatar-text">JD</span>
+                            </div>
+                            <div class="dropdown-user-info">
+                                <p class="dropdown-name">John Doe</p>
+                                <p class="dropdown-email">john.doe@university.edu</p>
+                            </div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="profile.html" class="dropdown-item">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 8C9.65685 8 11 6.65685 11 5C11 3.34315 9.65685 2 8 2C6.34315 2 5 3.34315 5 5C5 6.65685 6.34315 8 8 8ZM8 10C5.79086 10 1 11.7909 1 14V15H15V14C15 11.7909 10.2091 10 8 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Profile
+                        </a>
+                        <button class="dropdown-item logout-item" id="logoutBtn">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M6 3H12C13.1046 3 14 3.89543 14 5V11C14 12.1046 13.1046 13 12 13H6M6 13L3 10M6 13L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Logout
+                        </button>
+                    </div>
+                </div>
             </nav>
             <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
                 <span></span>

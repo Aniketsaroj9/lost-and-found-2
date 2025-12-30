@@ -135,9 +135,315 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
+    // Profile data fetching with proper error handling
+    const fetchProfileData = async () => {
+        try {
+            const response = await fetch('api/profile.php', {
+                credentials: 'same-origin'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                updateProfileUI(result);
+                updateUserDropdown(result.user);
+                updateUserAboutSection(result);
+            } else {
+                console.error('Profile data error:', result.message);
+                showProfileError(result.message);
+            }
+        } catch (error) {
+            console.error('Profile fetch error:', error);
+            showProfileError('Failed to load profile data. Please check your internet connection and try again.');
+        }
+    };
+
+    const showProfileError = (message) => {
+        // Update all profile fields with error message
+        const errorElements = [
+            'userName', 'userEmail', 'memberSince', 'fullName', 
+            'email', 'phoneNumber', 'studentId', 'reportsFiled', 
+            'itemsRecovered', 'pendingClaims'
+        ];
+        
+        errorElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = 'Failed to load';
+                element.style.color = 'var(--red-600)';
+            }
+        });
+
+        // Show error in recent reports section
+        const recentReports = document.getElementById('recentReports');
+        if (recentReports) {
+            recentReports.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: var(--red-600);">
+                    <p><strong>Error:</strong> ${message}</p>
+                    <button onclick="fetchProfileData()" class="btn btn-primary" style="margin-top: 1rem;">Retry</button>
+                </div>
+            `;
+        }
+
+        // Update avatar with error state
+        const avatarTexts = document.querySelectorAll('.avatar-text');
+        avatarTexts.forEach(el => {
+            el.textContent = '??';
+            el.parentElement.style.background = 'var(--red-600)';
+        });
+    };
+
+    const updateProfileUI = (data) => {
+        // Only update profile page elements if they exist
+        if (document.getElementById('userName')) {
+            // Reset error styling
+            const allElements = document.querySelectorAll('#profileHeader p, .info-item p, .stat-value');
+            allElements.forEach(el => {
+                el.style.color = '';
+            });
+
+            // Update profile header
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+            const userEmail = document.getElementById('userEmail');
+            const memberSince = document.getElementById('memberSince');
+
+            if (userAvatar && data.user.avatar) {
+                const avatarText = userAvatar.querySelector('.avatar-text');
+                if (avatarText) {
+                    avatarText.textContent = data.user.avatar;
+                    userAvatar.parentElement.style.background = 'var(--blue-600)';
+                }
+            }
+            if (userName) userName.textContent = data.user.fullName;
+            if (userEmail) userEmail.textContent = data.user.email;
+            if (memberSince) memberSince.textContent = `Member since ${data.user.memberSince}`;
+
+            // Update personal information
+            const fullName = document.getElementById('fullName');
+            const email = document.getElementById('email');
+            const phoneNumber = document.getElementById('phoneNumber');
+            const studentId = document.getElementById('studentId');
+
+            if (fullName) fullName.textContent = data.user.fullName;
+            if (email) email.textContent = data.user.email;
+            if (phoneNumber) phoneNumber.textContent = data.user.phone;
+            if (studentId) studentId.textContent = data.user.studentId;
+
+            // Update activity statistics
+            const reportsFiled = document.getElementById('reportsFiled');
+            const itemsRecovered = document.getElementById('itemsRecovered');
+            const pendingClaims = document.getElementById('pendingClaims');
+
+            if (reportsFiled) reportsFiled.textContent = data.stats.reportsFiled;
+            if (itemsRecovered) itemsRecovered.textContent = data.stats.itemsRecovered;
+            if (pendingClaims) pendingClaims.textContent = data.stats.pendingClaims;
+
+            // Update recent reports
+            const recentReports = document.getElementById('recentReports');
+            if (recentReports) {
+                if (data.recentReports && data.recentReports.length > 0) {
+                    recentReports.innerHTML = data.recentReports.map(report => `
+                        <article class="report-item">
+                            <div class="report-item__content">
+                                <h3>${report.title}</h3>
+                                <p class="item-meta">${report.type} • ${report.location} • ${report.date}</p>
+                                <span class="status-badge ${report.status === 'resolved' ? 'success' : report.status === 'pending' ? 'warning' : 'info'}">${report.status}</span>
+                            </div>
+                        </article>
+                    `).join('');
+                } else {
+                    recentReports.innerHTML = '<p class="muted">No recent reports found.</p>';
+                }
+            }
+        }
+        
+        // Always update about section and dropdown if they exist
+        updateUserAboutSection(data);
+        updateUserDropdown(data.user);
+    };
+
+    const updateUserDropdown = (user) => {
+        // Update all dropdown user info across pages
+        const dropdownNames = document.querySelectorAll('.dropdown-name');
+        const dropdownEmails = document.querySelectorAll('.dropdown-email');
+        const avatarTexts = document.querySelectorAll('.avatar-text');
+
+        dropdownNames.forEach(el => el.textContent = user.fullName);
+        dropdownEmails.forEach(el => el.textContent = user.email);
+        avatarTexts.forEach(el => {
+            el.textContent = user.avatar;
+            el.parentElement.style.background = 'var(--blue-600)';
+        });
+    };
+
+    const updateUserAboutSection = (data) => {
+        // Update about section user information
+        const userReportsCount = document.getElementById('userReportsCount');
+        const userRecoveredCount = document.getElementById('userRecoveredCount');
+        const userSuccessRate = document.getElementById('userSuccessRate');
+        const aboutUserAvatar = document.getElementById('aboutUserAvatar');
+        const aboutUserName = document.getElementById('aboutUserName');
+        const aboutUserEmail = document.getElementById('aboutUserEmail');
+        const aboutMemberSince = document.getElementById('aboutMemberSince');
+
+        if (userReportsCount) userReportsCount.textContent = data.stats.reportsFiled;
+        if (userRecoveredCount) userRecoveredCount.textContent = data.stats.itemsRecovered;
+        
+        // Calculate success rate
+        const successRate = data.stats.reportsFiled > 0 
+            ? Math.round((data.stats.itemsRecovered / data.stats.reportsFiled) * 100) 
+            : 0;
+        if (userSuccessRate) userSuccessRate.textContent = successRate + '%';
+
+        if (aboutUserAvatar) aboutUserAvatar.textContent = data.user.avatar;
+        if (aboutUserName) aboutUserName.textContent = data.user.fullName;
+        if (aboutUserEmail) aboutUserEmail.textContent = data.user.email;
+        if (aboutMemberSince) aboutMemberSince.textContent = `Member since ${data.user.memberSince}`;
+    };
+
+    // Debug function to check authentication and database
+    const debugAuth = async () => {
+        try {
+            const response = await fetch('api/debug.php');
+            const result = await response.json();
+            
+            console.log('=== AUTH DEBUG INFO ===');
+            console.log('Session data:', result.data.session);
+            console.log('Current user:', result.data.currentUser);
+            console.log('All users:', result.data.allUsers);
+            console.log('Database info:', result.data.database);
+            
+            if (result.data.session.isAuthenticated && result.data.currentUser) {
+                console.log('✅ User is properly authenticated');
+                return result.data.currentUser;
+            } else {
+                console.log('❌ User is not authenticated');
+                return null;
+            }
+        } catch (error) {
+            console.error('Debug failed:', error);
+            return null;
+        }
+    };
+
+    // Database status check
+    const checkDatabaseStatus = async () => {
+        try {
+            const response = await fetch('api/test_db.php');
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                console.log('Database status:', result.message, result.data);
+                return true;
+            } else {
+                console.error('Database error:', result.message);
+                return false;
+            }
+        } catch (error) {
+            console.error('Database check failed:', error);
+            return false;
+        }
+    };
+
+    // Fetch profile data if on profile page
+    if (document.body.dataset.requireAuthPage === 'true') {
+        // First check database, then fetch profile
+        checkDatabaseStatus().then(isDbConnected => {
+            if (isDbConnected) {
+                fetchProfileData();
+            } else {
+                showProfileError('Database connection failed. Please ensure MySQL is running in XAMPP.');
+            }
+        });
+    }
+
+    // Also fetch user data for index.html (about section) when authenticated
+    if (window.location.pathname.includes('index.html') || window.location.pathname.endsWith('/')) {
+        // Run debug first, then fetch data if authenticated
+        debugAuth().then(currentUser => {
+            if (currentUser) {
+                console.log('User is authenticated, fetching profile data for index page...');
+                fetchProfileData();
+            } else {
+                console.log('User is not authenticated, hiding user sections');
+                // Make sure user sections are hidden
+                const userSections = document.querySelectorAll('[data-auth-visible="user"]');
+                userSections.forEach(section => {
+                    section.classList.add('is-hidden');
+                });
+            }
+        });
+    }
+
+    // Debug: Check authentication status
+    console.log('Authentication status:', isAuthenticated());
+    console.log('Current page:', window.location.pathname);
+    
+    // Run debug on page load for troubleshooting
+    debugAuth();
+
+    // Edit profile functionality
+    const editProfileBtn = document.getElementById('editProfileBtn');
+    if (editProfileBtn) {
+        editProfileBtn.addEventListener('click', () => {
+            // Toggle edit mode for profile fields
+            const infoItems = document.querySelectorAll('.info-item p');
+            const isEditing = editProfileBtn.textContent === 'Save Profile';
+            
+            if (isEditing) {
+                // Save changes (you can implement API call here)
+                editProfileBtn.textContent = 'Edit Profile';
+                editProfileBtn.classList.remove('btn-success');
+                editProfileBtn.classList.add('btn-primary');
+                infoItems.forEach(item => {
+                    item.contentEditable = false;
+                    item.style.border = 'none';
+                    item.style.background = 'transparent';
+                });
+            } else {
+                // Enable editing
+                editProfileBtn.textContent = 'Save Profile';
+                editProfileBtn.classList.remove('btn-primary');
+                editProfileBtn.classList.add('btn-success');
+                infoItems.forEach(item => {
+                    item.contentEditable = true;
+                    item.style.border = '1px solid var(--blue-300)';
+                    item.style.background = 'var(--gray-50)';
+                    item.style.padding = '0.5rem';
+                    item.style.borderRadius = 'var(--radius-sm)';
+                });
+            }
+        });
+    }
+
     const navToggle = document.getElementById("navToggle");
     const navLinks = document.getElementById("navLinks");
     const yearEl = document.getElementById("year");
+
+    // User dropdown functionality
+    const userMenuTrigger = document.getElementById("userMenuTrigger");
+    const userDropdown = document.getElementById("userDropdown");
+
+    const toggleUserDropdown = (event) => {
+        event.stopPropagation();
+        userDropdown.classList.toggle("show");
+    };
+
+    const closeUserDropdown = (event) => {
+        if (!userMenuTrigger.contains(event.target) && !userDropdown.contains(event.target)) {
+            userDropdown.classList.remove("show");
+        }
+    };
+
+    if (userMenuTrigger && userDropdown) {
+        userMenuTrigger.addEventListener("click", toggleUserDropdown);
+        document.addEventListener("click", closeUserDropdown);
+    }
 
     if (yearEl) {
         yearEl.textContent = new Date().getFullYear();

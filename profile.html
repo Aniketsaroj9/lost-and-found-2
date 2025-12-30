@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile • Lost &amp; Found Portal</title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+
+<body data-require-auth-page="true">
+    <header class="site-header">
+        <div class="container nav">
+            <div class="logo">Lost &amp; Found</div>
+            <nav class="nav-links" id="navLinks">
+                <a href="index.html#home">Home</a>
+                <a href="index.html#browse">Browse</a>
+                <a href="index.html#contact">Contact</a>
+                <a href="dashboard.html" data-auth-visible="user">Dashboard</a>
+                <div class="user-menu" data-auth-visible="user">
+                    <button class="user-menu-trigger" id="userMenuTrigger">
+                        <div class="user-avatar">
+                            <span class="avatar-text">Loading...</span>
+                        </div>
+                        <svg class="chevron-down" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <div class="dropdown-avatar">
+                                <span class="avatar-text">Loading...</span>
+                            </div>
+                            <div class="dropdown-user-info">
+                                <p class="dropdown-name">Loading...</p>
+                                <p class="dropdown-email">Loading...</p>
+                            </div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="profile.html" class="dropdown-item">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 8C9.65685 8 11 6.65685 11 5C11 3.34315 9.65685 2 8 2C6.34315 2 5 3.34315 5 5C5 6.65685 6.34315 8 8 8ZM8 10C5.79086 10 1 11.7909 1 14V15H15V14C15 11.7909 10.2091 10 8 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Profile
+                        </a>
+                        <button class="dropdown-item logout-item" id="logoutBtn">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M6 3H12C13.1046 3 14 3.89543 14 5V11C14 12.1046 13.1046 13 12 13H6M6 13L3 10M6 13L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </nav>
+            <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <section class="profile-hero section">
+            <div class="container">
+                <div class="profile-header" id="profileHeader">
+                    <div class="profile-avatar">
+                        <div class="avatar-placeholder" id="userAvatar">
+                            <span class="avatar-text">Loading...</span>
+                        </div>
+                    </div>
+                    <div class="profile-info">
+                        <h1 id="userName">Loading...</h1>
+                        <p class="profile-email" id="userEmail">Loading...</p>
+                        <p class="profile-meta" id="memberSince">Loading...</p>
+                    </div>
+                    <div class="profile-actions">
+                        <button class="btn btn-primary" id="editProfileBtn">Edit Profile</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <div class="profile-grid">
+                    <div class="profile-section">
+                        <h2>Personal Information</h2>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>Full Name</label>
+                                <p id="fullName">Loading...</p>
+                            </div>
+                            <div class="info-item">
+                                <label>Email Address</label>
+                                <p id="email">Loading...</p>
+                            </div>
+                            <div class="info-item">
+                                <label>Phone Number</label>
+                                <p id="phoneNumber">Loading...</p>
+                            </div>
+                            <div class="info-item">
+                                <label>Student ID</label>
+                                <p id="studentId">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h2>Activity Summary</h2>
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <p class="stat-value" id="reportsFiled">0</p>
+                                <p class="stat-label">Reports Filed</p>
+                            </div>
+                            <div class="stat-card">
+                                <p class="stat-value" id="itemsRecovered">0</p>
+                                <p class="stat-label">Items Recovered</p>
+                            </div>
+                            <div class="stat-card">
+                                <p class="stat-value" id="pendingClaims">0</p>
+                                <p class="stat-label">Pending Claims</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-section">
+                        <h2>Recent Reports</h2>
+                        <div class="reports-list" id="recentReports">
+                            <p class="muted">Loading recent reports...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-grid">
+            <div>
+                <div class="logo">Lost &amp; Found</div>
+                <p class="muted">Built for modern campuses. Track and recover belongings in minutes.</p>
+            </div>
+            <div class="footer-links">
+                <a href="index.html#home">Home</a>
+                <a href="index.html#browse">Browse</a>
+                <a href="index.html#contact">Contact</a>
+            </div>
+            <div class="footer-meta">© <span id="year"></span> Lost &amp; Found Portal</div>
+        </div>
+    </footer>
+
+    <script src="profile_fetcher.js"></script>
+    <script src="script.js?v=2"></script>
+</body>
+
+</html>
