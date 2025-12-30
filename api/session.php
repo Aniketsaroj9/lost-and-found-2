@@ -15,5 +15,6 @@ lf_send_json(200, [
     'user' => $userId ? [
         'id' => (int)$userId,
         'name' => (string)$userName,
+        'role' => (string)($_SESSION['user_role'] ?? 'user'),
     ] : null,
 ]);

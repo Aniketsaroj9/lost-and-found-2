@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard • Lost & Found Portal</title>
+    <link rel="stylesheet" href="style.css?v=3">
+    <!-- Inline admin specific styles for simplicity -->
+    <style>
+        .admin-header {
+            background: var(--gray-900);
+            color: white;
+            padding: 1rem 0;
+        }
+
+        .admin-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .admin-nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .admin-grid {
+            display: grid;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .stat-card.admin {
+            background: var(--surface);
+            border-left: 4px solid var(--primary);
+        }
+
+        .approval-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .approval-item {
+            background: var(--surface);
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .approval-info h4 {
+            margin-bottom: 0.25rem;
+        }
+
+        .approval-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+    </style>
+</head>
+
+<body data-require-auth-page="true">
+    <header class="admin-header">
+        <div class="container admin-nav">
+            <div class="logo">Lost & Found Admin</div>
+            <nav>
+                <a href="#" onclick="showSection('dashboard')">Dashboard</a>
+                <a href="#" onclick="showSection('approvals')" style="margin-left: 1.5rem;">Match Approvals</a>
+                <a href="#" id="logoutBtn" style="margin-left: 1.5rem; color: var(--red-400);">Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container section">
+        <div id="dashboardSection">
+            <h1>System Overview</h1>
+            <div class="stats-grid">
+                <div class="stat-card admin">
+                    <p class="stat-value" id="totalUsers">0</p>
+                    <p class="stat-label">Total Users</p>
+                </div>
+                <div class="stat-card admin">
+                    <p class="stat-value" id="totalItems">0</p>
+                    <p class="stat-label">Total Items</p>
+                </div>
+                <div class="stat-card admin">
+                    <p class="stat-value" id="pendingApprovalsCount">0</p>
+                    <p class="stat-label">Pending Matches</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="approvalsSection" class="hidden">
+            <h1>Match Approvals</h1>
+            <p class="muted">Review pending matches. Approving will send an email notification to the user.</p>
+            <div id="approvalList" class="approval-list" style="margin-top: 2rem;">
+                <p>Loading pending matches...</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="script.js?v=5"></script>
+    <script>
+        // Simple Admin Logic
+        const API_BASE = 'api';
+
+        function showSection(id) {
+            document.getElementById('dashboardSection').classList.add('hidden');
+            document.getElementById('approvalsSection').classList.add('hidden');
+
+            if (id === 'dashboard') document.getElementById('dashboardSection').classList.remove('hidden');
+            if (id === 'approvals') {
+                document.getElementById('approvalsSection').classList.remove('hidden');
+                fetchPendingMatches();
+            }
+        }
+
+        async function fetchStats() {
+            // Simplified: Just use existing profile stats or mock for now as per plan focus on Approvals
+            // Ideally we'd have api/admin_stats.php
+        }
+
+        async function fetchPendingMatches() {
+            const list = document.getElementById('approvalList');
+            list.innerHTML = '<p class="muted">Loading...</p>';
+
+            try {
+                const res = await fetch(`${API_BASE}/admin_matches.php`);
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    if (data.matches.length === 0) {
+                        list.innerHTML = '<p class="muted">No pending matches found.</p>';
+                        return;
+                    }
+
+                    list.innerHTML = data.matches.map(match => `
+                        <div class="approval-item">
+                            <div class="approval-info">
+                                <h4>${match.title}</h4>
+                                <p class="muted">Reported by: ${match.reporter_name} (${match.reporter_email})</p>
+                                <p class="muted">Type: ${match.item_type} • Date: ${match.date}</p>
+                                <p style="margin-top: 0.5rem;">${match.description}</p>
+                            </div>
+                            <div class="approval-actions">
+                                <button onclick="approveMatch(${match.id})" class="btn btn-primary btn-sm">Approve</button>
+                                <button onclick="rejectMatch(${match.id})" class="btn btn-secondary btn-sm">Reject</button>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    // Update badge
+                    document.getElementById('pendingApprovalsCount').textContent = data.matches.length;
+                }
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = '<p class="error">Failed to load matches.</p>';
+            }
+        }
+
+        async function approveMatch(id) {
+            if (!confirm('Approve this match? This will send an email to the user.')) return;
+            updateMatchStatus(id, 'approved_email_sent');
+        }
+
+        async function rejectMatch(id) {
+            if (!confirm('Reject this match?')) return;
+            updateMatchStatus(id, 'rejected');
+        }
+
+        async function updateMatchStatus(id, status) {
+            try {
+                const res = await fetch(`${API_BASE}/admin_matches.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, status })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    // Refresh list
+                    fetchPendingMatches();
+                    alert(status === 'approved_email_sent' ? 'Match approved and email sent!' : 'Match rejected.');
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (err) {
+                alert('Connection error');
+            }
+        }
+
+        // Init
+        fetchPendingMatches(); // Load count
+    </script>
+</body>
+
+</html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="auth.css" />
 </head>
+
 <body>
     <div class="auth-page">
         <a class="brand" href="index.html">Lost &amp; Found</a>
@@ -22,6 +24,14 @@
                 </header>
 
                 <form class="auth-form" id="loginFormAuth">
+                    <div class="role-selector">
+                        <input type="radio" name="role" id="roleUser" value="user" checked>
+                        <label for="roleUser" class="role-option">User Login</label>
+
+                        <input type="radio" name="role" id="roleAdmin" value="admin">
+                        <label for="roleAdmin" class="role-option">Admin Login</label>
+                    </div>
+
                     <label>Email address
                         <input type="email" name="email" placeholder="you@university.edu" required />
                     </label>
@@ -44,6 +54,7 @@
         </main>
     </div>
 
-    <script src="auth.js"></script>
+    <script src="auth.js?v=2"></script>
 </body>
+
 </html>

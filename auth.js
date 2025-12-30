@@ -89,6 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const payload = {
                 email: formData.get("email"),
                 password: formData.get("password"),
+                role: formData.get("role") || "user"
             };
             try {
                 const response = await fetch(`${API_BASE}/login.php`, {
@@ -105,7 +106,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 setStatus(statusEl, "Login successful. Redirecting...");
                 storage.setItem(AUTH_STORAGE_KEY, "true");
-                const redirectTarget = getRedirectTarget();
+
+                // Determine redirect target based on role
+                const userRole = result.user.role;
+                let redirectTarget = getRedirectTarget();
+
+                if (userRole === 'admin') {
+                    redirectTarget = 'admin_dashboard.html';
+                } else if (redirectTarget.includes('admin_dashboard.html')) {
+                    // If user tried to access admin but logged in as user, force index
+                    redirectTarget = 'dashboard.html';
+                }
+
                 const performRedirect = () => {
                     window.location.href = redirectTarget;
                 };
@@ -166,7 +178,23 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // If we are already authenticated, check if we need to redirect
+    // BUT only if we are NOT explicitly trying to login (e.g. user might have manually navigated to login.html to switch accounts)
+    // A simple heuristic: if query param 'force_login' is present, don't auto-redirect.
+    // Or closer to standard: if we are on login.html, we usually DO want to redirect if auth is valid... 
+    // UNLESS the user clicked "Logout" recently? 
+    // The issue user described: "I am loging as admin but... seeing only users pages". 
+    // This implies the form submission worked, but `performRedirect` chose dashboard.html.
+
+    // Auto-redirect on page load (for persistent sessions)
+    // NOTE: This might be annoying if I want to "Exit" admin to behave like a normal user without logging out.
+    // But for now, let's keep it but ensure it respects role.
     if (storage.getItem(AUTH_STORAGE_KEY) === "true" && loginForm && storageIsRealLocalStorage) {
-        window.location.href = getRedirectTarget();
+        // Just redirect to default target. 
+        // We don't have user role here easily unless we fetch session.
+        // It's safer to let the user fill the form if they are here.
+        // Changing behavior: DO NOT auto-redirect from login.html if the form is present.
+        // This allows users to switch accounts/roles.
+        // window.location.href = getRedirectTarget();
     }
 });
