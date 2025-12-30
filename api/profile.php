@@ -21,7 +21,7 @@ try {
     
     // Get user basic info
     $stmt = $conn->prepare("
-        SELECT id, full_name, email, created_at 
+        SELECT id, full_name, email, phone, student_id, created_at 
         FROM users 
         WHERE id = ?
     ");
@@ -40,7 +40,7 @@ try {
     // Get user statistics
     $stmt = $conn->prepare("
         SELECT 
-            COUNT(CASE WHEN type = 'lost' THEN 1 END) as reports_filed,
+            COUNT(CASE WHEN item_type = 'lost' THEN 1 END) as reports_filed,
             COUNT(CASE WHEN status = 'resolved' THEN 1 END) as items_recovered,
             COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_claims
         FROM items 
@@ -52,10 +52,12 @@ try {
 
     // Get recent reports
     $stmt = $conn->prepare("
-        SELECT id, title, type, location, created_at, status
+        SELECT id, title, item_type as type, 
+               CASE WHEN item_type = 'lost' THEN location_lost ELSE location_found END as location, 
+               date_reported as created_at, status
         FROM items 
         WHERE user_id = ? 
-        ORDER BY created_at DESC 
+        ORDER BY date_reported DESC 
         LIMIT 5
     ");
     $stmt->bind_param("i", $userId);
@@ -68,8 +70,8 @@ try {
             'id' => (int)$user['id'],
             'fullName' => $user['full_name'],
             'email' => $user['email'],
-            'phone' => 'Not provided',
-            'studentId' => 'Not provided',
+            'phone' => $user['phone'] ?? 'Not provided',
+            'studentId' => $user['student_id'] ?? 'Not provided',
             'memberSince' => date('F Y', strtotime($user['created_at'])),
             'avatar' => strtoupper(substr($user['full_name'], 0, 2)) // Generate initials
         ],

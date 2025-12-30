@@ -141,13 +141,13 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch('api/profile.php', {
                 credentials: 'same-origin'
             });
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
+
             const result = await response.json();
-            
+
             if (result.status === 'success') {
                 updateProfileUI(result);
                 updateUserDropdown(result.user);
@@ -165,11 +165,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const showProfileError = (message) => {
         // Update all profile fields with error message
         const errorElements = [
-            'userName', 'userEmail', 'memberSince', 'fullName', 
-            'email', 'phoneNumber', 'studentId', 'reportsFiled', 
+            'userName', 'userEmail', 'memberSince', 'fullName',
+            'email', 'phoneNumber', 'studentId', 'reportsFiled',
             'itemsRecovered', 'pendingClaims'
         ];
-        
+
         errorElements.forEach(id => {
             const element = document.getElementById(id);
             if (element) {
@@ -261,7 +261,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }
         }
-        
+
         // Always update about section and dropdown if they exist
         updateUserAboutSection(data);
         updateUserDropdown(data.user);
@@ -293,10 +293,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (userReportsCount) userReportsCount.textContent = data.stats.reportsFiled;
         if (userRecoveredCount) userRecoveredCount.textContent = data.stats.itemsRecovered;
-        
+
         // Calculate success rate
-        const successRate = data.stats.reportsFiled > 0 
-            ? Math.round((data.stats.itemsRecovered / data.stats.reportsFiled) * 100) 
+        const successRate = data.stats.reportsFiled > 0
+            ? Math.round((data.stats.itemsRecovered / data.stats.reportsFiled) * 100)
             : 0;
         if (userSuccessRate) userSuccessRate.textContent = successRate + '%';
 
@@ -306,86 +306,24 @@ document.addEventListener("DOMContentLoaded", () => {
         if (aboutMemberSince) aboutMemberSince.textContent = `Member since ${data.user.memberSince}`;
     };
 
-    // Debug function to check authentication and database
-    const debugAuth = async () => {
-        try {
-            const response = await fetch('api/debug.php');
-            const result = await response.json();
-            
-            console.log('=== AUTH DEBUG INFO ===');
-            console.log('Session data:', result.data.session);
-            console.log('Current user:', result.data.currentUser);
-            console.log('All users:', result.data.allUsers);
-            console.log('Database info:', result.data.database);
-            
-            if (result.data.session.isAuthenticated && result.data.currentUser) {
-                console.log('✅ User is properly authenticated');
-                return result.data.currentUser;
-            } else {
-                console.log('❌ User is not authenticated');
-                return null;
-            }
-        } catch (error) {
-            console.error('Debug failed:', error);
-            return null;
+    // Verify authentication and fetch profile data
+    refreshAuthState().then(() => {
+        if (isAuthenticated()) {
+            console.log('User is authenticated, fetching profile data...');
+            fetchProfileData();
+        } else {
+            console.log('User is not authenticated');
+            // User sections are already handled by syncAuthVisibility, but strictly ensuring:
+            const userSections = document.querySelectorAll('[data-auth-visible="user"]');
+            userSections.forEach(section => {
+                section.classList.add('is-hidden');
+            });
         }
-    };
-
-    // Database status check
-    const checkDatabaseStatus = async () => {
-        try {
-            const response = await fetch('api/test_db.php');
-            const result = await response.json();
-            
-            if (result.status === 'success') {
-                console.log('Database status:', result.message, result.data);
-                return true;
-            } else {
-                console.error('Database error:', result.message);
-                return false;
-            }
-        } catch (error) {
-            console.error('Database check failed:', error);
-            return false;
-        }
-    };
-
-    // Fetch profile data if on profile page
-    if (document.body.dataset.requireAuthPage === 'true') {
-        // First check database, then fetch profile
-        checkDatabaseStatus().then(isDbConnected => {
-            if (isDbConnected) {
-                fetchProfileData();
-            } else {
-                showProfileError('Database connection failed. Please ensure MySQL is running in XAMPP.');
-            }
-        });
-    }
-
-    // Also fetch user data for index.html (about section) when authenticated
-    if (window.location.pathname.includes('index.html') || window.location.pathname.endsWith('/')) {
-        // Run debug first, then fetch data if authenticated
-        debugAuth().then(currentUser => {
-            if (currentUser) {
-                console.log('User is authenticated, fetching profile data for index page...');
-                fetchProfileData();
-            } else {
-                console.log('User is not authenticated, hiding user sections');
-                // Make sure user sections are hidden
-                const userSections = document.querySelectorAll('[data-auth-visible="user"]');
-                userSections.forEach(section => {
-                    section.classList.add('is-hidden');
-                });
-            }
-        });
-    }
+    });
 
     // Debug: Check authentication status
     console.log('Authentication status:', isAuthenticated());
     console.log('Current page:', window.location.pathname);
-    
-    // Run debug on page load for troubleshooting
-    debugAuth();
 
     // Edit profile functionality
     const editProfileBtn = document.getElementById('editProfileBtn');
@@ -394,17 +332,55 @@ document.addEventListener("DOMContentLoaded", () => {
             // Toggle edit mode for profile fields
             const infoItems = document.querySelectorAll('.info-item p');
             const isEditing = editProfileBtn.textContent === 'Save Profile';
-            
+
             if (isEditing) {
-                // Save changes (you can implement API call here)
-                editProfileBtn.textContent = 'Edit Profile';
-                editProfileBtn.classList.remove('btn-success');
-                editProfileBtn.classList.add('btn-primary');
-                infoItems.forEach(item => {
-                    item.contentEditable = false;
-                    item.style.border = 'none';
-                    item.style.background = 'transparent';
-                });
+                // Save changes
+                editProfileBtn.textContent = 'Saving...';
+                editProfileBtn.disabled = true;
+
+                const payload = {
+                    fullName: document.getElementById('fullName').textContent.trim(),
+                    phone: document.getElementById('phoneNumber').textContent.trim(),
+                    studentId: document.getElementById('studentId').textContent.trim()
+                };
+
+                fetch('api/update_profile.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // Success update
+                            editProfileBtn.textContent = 'Edit Profile';
+                            editProfileBtn.classList.remove('btn-success');
+                            editProfileBtn.classList.add('btn-primary');
+                            infoItems.forEach(item => {
+                                item.contentEditable = false;
+                                item.style.border = 'none';
+                                item.style.background = 'transparent';
+                            });
+
+                            // Update header name too
+                            const linkName = document.getElementById('userName');
+                            if (linkName) linkName.textContent = payload.fullName;
+                            updateUserDropdown({ fullName: payload.fullName, email: document.getElementById('email').textContent, avatar: payload.fullName.substring(0, 2).toUpperCase() });
+
+                        } else {
+                            alert('Error saving profile: ' + data.message);
+                            editProfileBtn.textContent = 'Save Profile';
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Failed to save profile. Check console.');
+                        editProfileBtn.textContent = 'Save Profile';
+                    })
+                    .finally(() => {
+                        editProfileBtn.disabled = false;
+                    });
+
             } else {
                 // Enable editing
                 editProfileBtn.textContent = 'Save Profile';
@@ -430,19 +406,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const userDropdown = document.getElementById("userDropdown");
 
     const toggleUserDropdown = (event) => {
+        event.preventDefault(); // Prevent default button behavior
         event.stopPropagation();
         userDropdown.classList.toggle("show");
+        console.log("Dropdown toggled. Classes:", userDropdown.classList);
     };
 
     const closeUserDropdown = (event) => {
-        if (!userMenuTrigger.contains(event.target) && !userDropdown.contains(event.target)) {
-            userDropdown.classList.remove("show");
+        if (userMenuTrigger && userDropdown) {
+            if (!userMenuTrigger.contains(event.target) && !userDropdown.contains(event.target)) {
+                userDropdown.classList.remove("show");
+            }
         }
     };
 
     if (userMenuTrigger && userDropdown) {
+        console.log("Adding dropdown event listeners");
         userMenuTrigger.addEventListener("click", toggleUserDropdown);
         document.addEventListener("click", closeUserDropdown);
+    } else {
+        console.error("Dropdown elements not found:", { userMenuTrigger, userDropdown });
     }
 
     if (yearEl) {
@@ -460,13 +443,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // No more dummy items
-    const itemsGrid = document.getElementById("itemsGrid");
+    const lostItemsGrid = document.getElementById("lostItemsGrid");
+    const foundItemsGrid = document.getElementById("foundItemsGrid");
     const searchInput = document.getElementById("searchInput");
     const categoryFilter = document.getElementById("categoryFilter");
 
     const fetchItems = async () => {
-        if (!itemsGrid) return;
-        itemsGrid.innerHTML = '<p class="muted">Loading items...</p>';
+        console.log("fetchItems called");
+        if (lostItemsGrid) lostItemsGrid.innerHTML = '<p class="muted">Loading items...</p>';
+        if (foundItemsGrid) foundItemsGrid.innerHTML = '<p class="muted">Loading items...</p>';
 
         try {
             const params = new URLSearchParams();
@@ -477,27 +462,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 params.append("category", categoryFilter.value);
             }
 
+            console.log("Fetching from:", `${API_BASE}/items.php?${params.toString()}`);
             const response = await fetch(`${API_BASE}/items.php?${params.toString()}`);
-            if (!response.ok) throw new Error("Failed to load items");
+            console.log("Response status:", response.status);
+
+            if (!response.ok) throw new Error("Failed to load items: " + response.statusText);
 
             const result = await response.json();
+            console.log("Data received:", result);
             renderItems(result.data || []);
         } catch (error) {
-            console.error(error);
-            itemsGrid.innerHTML = '<p class="muted" style="color:var(--red-500)">Failed to load items. Please try refreshing.</p>';
+            console.error("Fetch error:", error);
+            const errorMsg = `<p class="muted" style="color:var(--red-500)">Failed to load items: ${error.message}</p>`;
+            if (lostItemsGrid) lostItemsGrid.innerHTML = errorMsg;
+            if (foundItemsGrid) foundItemsGrid.innerHTML = errorMsg;
         }
     };
 
     const renderItems = (items) => {
-        if (!itemsGrid) return;
-        if (!items.length) {
-            itemsGrid.innerHTML = '<p class="muted">No items match your filters.</p>';
-            return;
-        }
-
-        itemsGrid.innerHTML = items
-            .map(
-                (item) => `
+        const createItemCard = (item) => `
                 <article class="item-card">
                     <img src="${item.image_path ? item.image_path : 'https://placehold.co/600x400?text=No+Image'}" alt="${item.title}" loading="lazy" />
                     <div class="item-card__content">
@@ -505,9 +488,26 @@ document.addEventListener("DOMContentLoaded", () => {
                         <p class="item-meta">${item.category_name || 'Uncategorized'} • ${new Date(item.date).toLocaleDateString()}</p>
                         <p class="item-meta">Location: ${item.location}</p>
                     </div>
-                </article>`
-            )
-            .join("");
+                </article>`;
+
+        const lostItems = items.filter(item => item.item_type && item.item_type.toLowerCase() === 'lost');
+        const foundItems = items.filter(item => item.item_type && item.item_type.toLowerCase() === 'found');
+
+        if (lostItemsGrid) {
+            if (lostItems.length === 0) {
+                lostItemsGrid.innerHTML = '<p class="muted">No lost items match your filters.</p>';
+            } else {
+                lostItemsGrid.innerHTML = lostItems.map(createItemCard).join("");
+            }
+        }
+
+        if (foundItemsGrid) {
+            if (foundItems.length === 0) {
+                foundItemsGrid.innerHTML = '<p class="muted">No found items match your filters.</p>';
+            } else {
+                foundItemsGrid.innerHTML = foundItems.map(createItemCard).join("");
+            }
+        }
     };
 
     // Use debouncing for search if needed, currently direct for simplicity
@@ -632,4 +632,36 @@ document.addEventListener("DOMContentLoaded", () => {
     if (inlineSignupForm) {
         attachFormHandler(inlineSignupForm, { successMessage: "Account created." });
     }
+
+    const setupTabs = () => {
+        const tabs = document.querySelectorAll(".tab-btn");
+        const sections = {
+            lost: document.getElementById("lostSection"),
+            found: document.getElementById("foundSection")
+        };
+
+        tabs.forEach(tab => {
+            tab.addEventListener("click", () => {
+                const target = tab.dataset.tab;
+
+                // Update buttons
+                tabs.forEach(t => t.classList.remove("active"));
+                tab.classList.add("active");
+
+                // Update sections
+                Object.keys(sections).forEach(key => {
+                    const section = sections[key];
+                    if (section) {
+                        if (key === target) {
+                            section.classList.remove("hidden");
+                        } else {
+                            section.classList.add("hidden");
+                        }
+                    }
+                });
+            });
+        });
+    };
+
+    setupTabs();
 });

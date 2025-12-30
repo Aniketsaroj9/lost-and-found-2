@@ -21,14 +21,13 @@ lf_log("POST Data: " . print_r($_POST, true));
 lf_log("FILES Data: " . print_r($_FILES, true));
 lf_log("Session User ID: " . ($_SESSION['user_id'] ?? 'NULL'));
 
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
-    lf_send_json(401, ['status' => 'error', 'message' => 'You must be logged in to report an item.']);
-}
-
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'POST') {
+    // Check if user is logged in for reporting
+    if (!isset($_SESSION['user_id'])) {
+        lf_send_json(401, ['status' => 'error', 'message' => 'You must be logged in to report an item.']);
+    }
     handleCreateItem();
 } elseif ($method === 'GET') {
     handleGetItems();
