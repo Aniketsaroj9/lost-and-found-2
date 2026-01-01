@@ -50,12 +50,13 @@ function handleGetItems() {
         LEFT JOIN categories c ON i.category_id = c.id
         LEFT JOIN item_images ii ON i.id = ii.item_id AND ii.is_primary = 1
         LEFT JOIN users u ON i.user_id = u.id
-        WHERE 1=1
+        WHERE i.status = 'open'
     ";
 
     $params = [];
     $types = "";
 
+    // Optional filters
     if ($filterUser) {
         $sql .= " AND i.user_id = ?";
         $params[] = $filterUser;

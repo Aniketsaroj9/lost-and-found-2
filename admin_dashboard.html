@@ -71,6 +71,7 @@
             <nav>
                 <a href="#" onclick="showSection('dashboard')">Dashboard</a>
                 <a href="#" onclick="showSection('approvals')" style="margin-left: 1.5rem;">Match Approvals</a>
+                <a href="#" onclick="showSection('history')" style="margin-left: 1.5rem;">History</a>
                 <a href="#" id="logoutBtn" style="margin-left: 1.5rem; color: var(--red-400);">Logout</a>
             </nav>
         </div>
@@ -102,6 +103,14 @@
                 <p>Loading pending matches...</p>
             </div>
         </div>
+
+        <div id="historySection" class="hidden">
+            <h1>Claim History</h1>
+            <p class="muted">View past approved and rejected claims.</p>
+            <div id="historyList" class="approval-list" style="margin-top: 2rem;">
+                <p>Loading history...</p>
+            </div>
+        </div>
     </main>
 
     <script src="script.js?v=5"></script>
@@ -112,11 +121,16 @@
         function showSection(id) {
             document.getElementById('dashboardSection').classList.add('hidden');
             document.getElementById('approvalsSection').classList.add('hidden');
+            document.getElementById('historySection').classList.add('hidden');
 
             if (id === 'dashboard') document.getElementById('dashboardSection').classList.remove('hidden');
             if (id === 'approvals') {
                 document.getElementById('approvalsSection').classList.remove('hidden');
                 fetchPendingMatches();
+            }
+            if (id === 'history') {
+                document.getElementById('historySection').classList.remove('hidden');
+                fetchHistory();
             }
         }
 
@@ -160,6 +174,40 @@
             } catch (err) {
                 console.error(err);
                 list.innerHTML = '<p class="error">Failed to load matches.</p>';
+            }
+        }
+
+        async function fetchHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = '<p class="muted">Loading...</p>';
+
+            try {
+                const res = await fetch(`${API_BASE}/admin_matches.php?type=history`);
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    if (data.matches.length === 0) {
+                        list.innerHTML = '<p class="muted">No history found.</p>';
+                        return;
+                    }
+
+                    list.innerHTML = data.matches.map(match => `
+                        <div class="approval-item">
+                            <div class="approval-info">
+                                <h4>${match.title} <span class="badge ${match.status === 'approved_email_sent' ? 'badge-success' : 'badge-danger'}" style="font-size: 0.8em; padding: 0.2em 0.5em; border-radius: 4px; background: ${match.status === 'approved_email_sent' ? '#dcfce7; color: #166534' : '#fee2e2; color: #991b1b'};">${match.status === 'approved_email_sent' ? 'Approved' : 'Rejected'}</span></h4>
+                                <p class="muted">Reported by: ${match.reporter_name} (${match.reporter_email})</p>
+                                <p class="muted">Type: ${match.item_type} • Date: ${match.date}</p>
+                                <p style="margin-top: 0.5rem;">${match.description}</p>
+                            </div>
+                            <div class="approval-actions">
+                                <!-- Actions could be added here like 'Undo' if needed -->
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = '<p class="error">Failed to load history.</p>';
             }
         }
 

@@ -22,17 +22,33 @@ $method = $_SERVER['REQUEST_METHOD'];
 // For now, let's treat "Pending Claims" as the matches to approve.
 
 if ($method === 'GET') {
-    // Fetch pending claims
-    $sql = "
-        SELECT c.id, c.description, c.created_at as date,
-               i.title, i.item_type,
-               u.full_name as reporter_name, u.email as reporter_email
-        FROM claims c
-        JOIN items i ON c.item_id = i.id
-        JOIN users u ON c.user_id = u.id
-        WHERE c.status = 'pending'
-        ORDER BY c.created_at DESC
-    ";
+    $type = $_GET['type'] ?? 'pending';
+
+    if ($type === 'history') {
+        // Fetch approved/rejected claims
+        $sql = "
+            SELECT c.id, c.description, c.created_at as date, c.status,
+                   i.title, i.item_type,
+                   u.full_name as reporter_name, u.email as reporter_email
+            FROM claims c
+            JOIN items i ON c.item_id = i.id
+            JOIN users u ON c.user_id = u.id
+            WHERE c.status != 'pending'
+            ORDER BY c.updated_at DESC
+        ";
+    } else {
+        // Fetch pending claims
+        $sql = "
+            SELECT c.id, c.description, c.created_at as date,
+                   i.title, i.item_type,
+                   u.full_name as reporter_name, u.email as reporter_email
+            FROM claims c
+            JOIN items i ON c.item_id = i.id
+            JOIN users u ON c.user_id = u.id
+            WHERE c.status = 'pending'
+            ORDER BY c.created_at DESC
+        ";
+    }
     
     $result = $conn->query($sql);
     $matches = [];
@@ -51,16 +67,40 @@ elseif ($method === 'POST') {
         lf_send_json(422, ['status' => 'error', 'message' => 'Invalid parameters']);
     }
 
-    // Update status
-    $stmt = $conn->prepare("UPDATE claims SET status = ? WHERE id = ?");
-    $stmt->bind_param("si", $status, $id);
-    
-    if ($stmt->execute()) {
-        // Here we would effectively "Send Email"
-        // For simulation, the status 'approved_email_sent' indicates this.
+    try {
+        $conn->begin_transaction();
+
+        // 1. Update Claim Status
+        $stmt = $conn->prepare("UPDATE claims SET status = ? WHERE id = ?");
+        $stmt->bind_param("si", $status, $id);
         
+        if (!$stmt->execute()) {
+            throw new Exception("Failed to update claim status");
+        }
+
+        // 2. If Approved, Mark Item as Claimed
+        if ($status === 'approved_email_sent') {
+            // Get item_id from claim
+            $getClaim = $conn->prepare("SELECT item_id FROM claims WHERE id = ?");
+            $getClaim->bind_param("i", $id);
+            $getClaim->execute();
+            $claimRow = $getClaim->get_result()->fetch_assoc();
+            
+            if ($claimRow) {
+                $itemId = $claimRow['item_id'];
+                $updateItem = $conn->prepare("UPDATE items SET status = 'claimed' WHERE id = ?");
+                $updateItem->bind_param("i", $itemId);
+                if (!$updateItem->execute()) {
+                    throw new Exception("Failed to update item status");
+                }
+            }
+        }
+
+        $conn->commit();
         lf_send_json(200, ['status' => 'success', 'message' => 'Status updated']);
-    } else {
-        lf_send_json(500, ['status' => 'error', 'message' => 'Database error']);
+
+    } catch (Exception $e) {
+        $conn->rollback();
+        lf_send_json(500, ['status' => 'error', 'message' => 'Database error: ' . $e->getMessage()]);
     }
 }
