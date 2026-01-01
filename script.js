@@ -48,6 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
     })();
 
     const isAuthenticated = () => storage.getItem(AUTH_STORAGE_KEY) === "true";
+    window.isAuthenticated = isAuthenticated;
 
     const syncAuthVisibility = () => {
         const authed = isAuthenticated();
@@ -479,6 +480,38 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
+    const handleClaim = async (itemId) => {
+        if (!isAuthenticated()) {
+            alert("Please log in to claim an item.");
+            window.location.href = "login.html";
+            return;
+        }
+
+        const description = prompt("Please describe the item details to verify ownership:");
+        if (!description) return;
+
+        try {
+            const response = await fetch(`${API_BASE}/create_claim.php`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ item_id: itemId, description }),
+            });
+            const result = await response.json();
+
+            if (response.ok) {
+                alert(result.message);
+            } else {
+                alert("Error: " + result.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Failed to submit claim. Please try again.");
+        }
+    };
+
+    // Attach function to window so onclick works
+    window.handleClaim = handleClaim;
+
     const renderItems = (items) => {
         const createItemCard = (item) => `
                 <article class="item-card">
@@ -487,6 +520,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <h3>${item.title}</h3>
                         <p class="item-meta">${item.category_name || 'Uncategorized'} • ${new Date(item.date).toLocaleDateString()}</p>
                         <p class="item-meta">Location: ${item.location}</p>
+                        ${item.item_type && item.item_type.toLowerCase() === 'found' ? `<button onclick="handleClaim(${item.id})" class="btn btn-sm btn-outline" style="margin-top:0.5rem; width:100%">Claim This</button>` : ''}
                     </div>
                 </article>`;
 
