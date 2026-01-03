@@ -10,6 +10,13 @@ const DB_NAME = 'lost_and_found_2';
 const DB_USER = 'root';
 const DB_PASS = '';
 
+// SMTP Configuration
+const SMTP_HOST = 'smtp.gmail.com';
+const SMTP_PORT = 587;
+const SMTP_USER = 'aniketsaroj9@gmail.com'; // REPLACE THIS
+const SMTP_PASS = 'wqwv fpxz imvo tspg';    // REPLACE THIS
+const SMTP_FROM = 'noreply@lostandfound.com';
+
 /**
  * Start a PHP session if one is not already active.
  */

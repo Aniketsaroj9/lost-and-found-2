@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/mail.php';
 
 lf_start_session();
 
@@ -63,7 +64,7 @@ elseif ($method === 'POST') {
     $id = (int)($data['id'] ?? 0);
     $status = $data['status'] ?? '';
     
-    if (!$id || !in_array($status, ['approved_email_sent', 'rejected'])) {
+    if (!$id || !in_array($status, ['approved', 'rejected'])) {
         lf_send_json(422, ['status' => 'error', 'message' => 'Invalid parameters']);
     }
 
@@ -79,7 +80,7 @@ elseif ($method === 'POST') {
         }
 
         // 2. If Approved, Mark Item as Claimed
-        if ($status === 'approved_email_sent') {
+        if ($status === 'approved') {
             // Get item_id from claim
             $getClaim = $conn->prepare("SELECT item_id FROM claims WHERE id = ?");
             $getClaim->bind_param("i", $id);
@@ -92,6 +93,33 @@ elseif ($method === 'POST') {
                 $updateItem->bind_param("i", $itemId);
                 if (!$updateItem->execute()) {
                     throw new Exception("Failed to update item status");
+                }
+
+                // --- 3. SEND EMAIL NOTIFICATION ---
+                // Fetch User (Claimer) and Item details
+                $detailsQuery = $conn->prepare("
+                    SELECT u.email, u.full_name, i.title
+                    FROM claims c
+                    JOIN users u ON c.user_id = u.id
+                    JOIN items i ON c.item_id = i.id
+                    WHERE c.id = ?
+                ");
+                $detailsQuery->bind_param("i", $id);
+                $detailsQuery->execute();
+                $details = $detailsQuery->get_result()->fetch_assoc();
+
+                if ($details) {
+                    $to = $details['email'];
+                    $name = $details['full_name'];
+                    $item = $details['title'];
+                    $subject = "Claim Approved: $item";
+                    $message = "Hello $name,\n\n";
+                    $message .= "Good news! Your claim for the item '$item' has been approved by the administrators.\n\n";
+                    $message .= "Please visit the Lost & Found office during working hours (9 AM - 5 PM) to collect your item.\n";
+                    $message .= "Bring your Student ID for verification.\n\n";
+                    $message .= "Regards,\nLost & Found Team";
+
+                    lf_send_email($to, $subject, $message);
                 }
             }
         }

@@ -140,6 +140,8 @@
                     <h2>Explore recent reports</h2>
                     <div class="filters">
                         <input type="text" id="searchInput" placeholder="Search by keyword" />
+                        <input type="date" id="startDateFilter" placeholder="Start Date" aria-label="Start Date" />
+                        <input type="date" id="endDateFilter" placeholder="End Date" aria-label="End Date" />
                         <select id="categoryFilter">
                             <option value="all">All Categories</option>
                             <option value="Electronics">Electronics</option>
@@ -239,6 +241,32 @@
             </div>
         </section>
     </main>
+
+    <!-- Claim Modal -->
+    <div id="claimModal" class="modal-overlay hidden" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true">
+            <div class="modal-header">
+                <h3>Claim Item</h3>
+                <button class="modal-close" id="closeClaimModal" aria-label="Close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Please provide details to prove ownership of this item (e.g., serial number, color, unique marks,
+                    contents).</p>
+                <form id="claimForm">
+                    <input type="hidden" id="claimItemId" name="item_id">
+                    <label>
+                        Proof of Ownership
+                        <textarea id="claimDescription" name="description" rows="4" required
+                            placeholder="Describe the item..."></textarea>
+                    </label>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelClaimBtn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Submit Claim</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <footer class="footer">
         <div class="container footer-grid">

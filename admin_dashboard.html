@@ -194,7 +194,7 @@
                     list.innerHTML = data.matches.map(match => `
                         <div class="approval-item">
                             <div class="approval-info">
-                                <h4>${match.title} <span class="badge ${match.status === 'approved_email_sent' ? 'badge-success' : 'badge-danger'}" style="font-size: 0.8em; padding: 0.2em 0.5em; border-radius: 4px; background: ${match.status === 'approved_email_sent' ? '#dcfce7; color: #166534' : '#fee2e2; color: #991b1b'};">${match.status === 'approved_email_sent' ? 'Approved' : 'Rejected'}</span></h4>
+                                <h4>${match.title} <span class="badge ${match.status === 'approved' ? 'badge-success' : 'badge-danger'}" style="font-size: 0.8em; padding: 0.2em 0.5em; border-radius: 4px; background: ${match.status === 'approved' ? '#dcfce7; color: #166534' : '#fee2e2; color: #991b1b'};">${match.status === 'approved' ? 'Approved' : 'Rejected'}</span></h4>
                                 <p class="muted">Reported by: ${match.reporter_name} (${match.reporter_email})</p>
                                 <p class="muted">Type: ${match.item_type} • Date: ${match.date}</p>
                                 <p style="margin-top: 0.5rem;">${match.description}</p>
@@ -213,7 +213,7 @@
 
         async function approveMatch(id) {
             if (!confirm('Approve this match? This will send an email to the user.')) return;
-            updateMatchStatus(id, 'approved_email_sent');
+            updateMatchStatus(id, 'approved');
         }
 
         async function rejectMatch(id) {
@@ -232,7 +232,7 @@
                 if (data.status === 'success') {
                     // Refresh list
                     fetchPendingMatches();
-                    alert(status === 'approved_email_sent' ? 'Match approved and email sent!' : 'Match rejected.');
+                    alert(status === 'approved' ? 'Match approved and email sent!' : 'Match rejected.');
                 } else {
                     alert('Error: ' + data.message);
                 }

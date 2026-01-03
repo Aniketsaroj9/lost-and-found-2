@@ -326,7 +326,12 @@ textarea:focus {
 
 .filters input,
 .filters select {
-    min-width: 220px;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    flex: 1;
+    min-width: 140px;
 }
 
 .item-card {
@@ -769,12 +774,12 @@ textarea:focus {
     .user-stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .user-info-card {
         flex-direction: column;
         text-align: center;
     }
-    
+
     .user-info-avatar {
         margin: 0 auto;
     }
@@ -785,11 +790,11 @@ textarea:focus {
         right: -1rem;
         min-width: 260px;
     }
-    
+
     .dropdown-header {
         padding: 0.75rem;
     }
-    
+
     .dropdown-item {
         padding: 0.6rem 0.75rem;
     }
@@ -800,14 +805,104 @@ textarea:focus {
         flex-direction: column;
         text-align: center;
     }
-    
+
     .profile-actions {
         width: 100%;
+        display: flex;
+        justify-content: center;
     }
-    
-    .profile-actions .btn {
-        width: 100%;
-    }
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+}
+
+.modal-overlay:not(.hidden) {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal {
+    background: var(--white);
+    border-radius: var(--radius-md);
+    width: min(500px, 90%);
+    box-shadow: var(--shadow-soft);
+    transform: scale(0.95);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-overlay:not(.hidden) .modal {
+    transform: scale(1);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--gray-500);
+    padding: 0.5rem;
+    line-height: 1;
+    border-radius: var(--radius-sm);
+    transition: background 0.2s;
+}
+
+.modal-close:hover {
+    background: var(--gray-100);
+    color: var(--gray-900);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+#claimForm textarea {
+    width: 100%;
+    resize: vertical;
+    min-height: 100px;
+}
+
+text-align: center;
+}
+
+.profile-actions {
+    width: 100%;
+}
+
+.profile-actions .btn {
+    width: 100%;
+}
 }
 
 .stats {
@@ -1118,4 +1213,3 @@ textarea:focus {
 .hidden {
     display: none !important;
 }
-

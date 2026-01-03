@@ -43,6 +43,8 @@ function handleGetItems() {
     $filterUser = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
     $search = isset($_GET['search']) ? trim($_GET['search']) : '';
     $category = isset($_GET['category']) ? trim($_GET['category']) : '';
+    $startDate = isset($_GET['start_date']) ? trim($_GET['start_date']) : '';
+    $endDate = isset($_GET['end_date']) ? trim($_GET['end_date']) : '';
 
     $sql = "
         SELECT i.*, c.name as category_name, ii.image_path, u.full_name as user_name
@@ -76,6 +78,18 @@ function handleGetItems() {
     if ($category && $category !== 'all') {
         $sql .= " AND c.name = ?";
         $params[] = $category;
+        $types .= "s";
+    }
+
+    if ($startDate) {
+        $sql .= " AND i.date_reported >= ?";
+        $params[] = $startDate . " 00:00:00";
+        $types .= "s";
+    }
+
+    if ($endDate) {
+        $sql .= " AND i.date_reported <= ?";
+        $params[] = $endDate . " 23:59:59";
         $types .= "s";
     }
 

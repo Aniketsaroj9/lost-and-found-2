@@ -5,6 +5,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const SESSION_ENDPOINT = `${API_BASE}/session.php`;
     const LOGOUT_ENDPOINT = `${API_BASE}/logout.php`;
 
+    let currentUserId = null;
+
     const createStorage = () => {
         const tryStore = (getter) => {
             try {
@@ -90,6 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const response = await fetch(SESSION_ENDPOINT, { credentials: "same-origin" });
             if (!response.ok) return;
             const result = await response.json();
+            currentUserId = result.user ? result.user.id : null;
             applyAuthState(Boolean(result.authenticated));
         } catch (error) {
             console.warn("Unable to sync auth state", error);
@@ -97,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     updateAuthUI();
-    refreshAuthState();
+    // refreshAuthState() call moved to later promise chain to ensure sequential execution
 
     if (storageSupportsEvents) {
         window.addEventListener("storage", (event) => {
@@ -312,6 +315,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (isAuthenticated()) {
             console.log('User is authenticated, fetching profile data...');
             fetchProfileData();
+            if (document.getElementById('globalOpenReports')) {
+                fetchDashboardStats();
+            }
         } else {
             console.log('User is not authenticated');
             // User sections are already handled by syncAuthVisibility, but strictly ensuring:
@@ -320,7 +326,44 @@ document.addEventListener("DOMContentLoaded", () => {
                 section.classList.add('is-hidden');
             });
         }
+        fetchItems();
     });
+
+    const fetchDashboardStats = async () => {
+        try {
+            const response = await fetch(`${API_BASE}/dashboard_stats.php`, { credentials: 'same-origin' });
+            if (!response.ok) throw new Error('Failed to fetch stats');
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                const { campus, user } = result.data;
+
+                // Update Campus Pulse
+                const setText = (id, val) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = val;
+                };
+
+                setText('globalOpenReports', campus.open_reports);
+                setText('globalMatchesReview', campus.matches_review);
+                setText('globalAwaitingPickup', campus.awaiting_pickup);
+
+                // Update timestamp
+                const timeEl = document.getElementById('lastUpdatedTime');
+                if (timeEl) {
+                    const now = new Date();
+                    timeEl.textContent = `Updated ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                }
+
+                // Update User Stats
+                setText('userReportsCount', user.reports_filed);
+                setText('userResolvedCount', user.resolved_cases);
+                setText('userPendingCount', user.pending_verifications);
+            }
+        } catch (error) {
+            console.error('Dashboard stats error:', error);
+        }
+    };
 
     // Debug: Check authentication status
     console.log('Authentication status:', isAuthenticated());
@@ -448,6 +491,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const foundItemsGrid = document.getElementById("foundItemsGrid");
     const searchInput = document.getElementById("searchInput");
     const categoryFilter = document.getElementById("categoryFilter");
+    const startDateFilter = document.getElementById("startDateFilter");
+    const endDateFilter = document.getElementById("endDateFilter");
 
     const fetchItems = async () => {
         console.log("fetchItems called");
@@ -461,6 +506,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             if (categoryFilter && categoryFilter.value !== "all") {
                 params.append("category", categoryFilter.value);
+            }
+            if (startDateFilter && startDateFilter.value) {
+                params.append("start_date", startDateFilter.value);
+            }
+            if (endDateFilter && endDateFilter.value) {
+                params.append("end_date", endDateFilter.value);
             }
 
             console.log("Fetching from:", `${API_BASE}/items.php?${params.toString()}`);
@@ -480,34 +531,78 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     };
 
-    const handleClaim = async (itemId) => {
+    const claimModal = document.getElementById("claimModal");
+    const claimForm = document.getElementById("claimForm");
+    const claimItemIdInput = document.getElementById("claimItemId");
+    const closeClaimModalBtn = document.getElementById("closeClaimModal");
+    const cancelClaimBtn = document.getElementById("cancelClaimBtn");
+
+    const closeClaimModal = () => {
+        claimModal.classList.add("hidden");
+        claimModal.setAttribute("aria-hidden", "true");
+        claimForm.reset();
+    };
+
+    const handleClaim = (itemId) => {
         if (!isAuthenticated()) {
             alert("Please log in to claim an item.");
             window.location.href = "login.html";
             return;
         }
 
-        const description = prompt("Please describe the item details to verify ownership:");
-        if (!description) return;
-
-        try {
-            const response = await fetch(`${API_BASE}/create_claim.php`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ item_id: itemId, description }),
-            });
-            const result = await response.json();
-
-            if (response.ok) {
-                alert(result.message);
-            } else {
-                alert("Error: " + result.message);
-            }
-        } catch (error) {
-            console.error(error);
-            alert("Failed to submit claim. Please try again.");
-        }
+        // Open Modal
+        claimItemIdInput.value = itemId;
+        claimModal.classList.remove("hidden");
+        claimModal.setAttribute("aria-hidden", "false");
     };
+
+    if (closeClaimModalBtn) closeClaimModalBtn.addEventListener("click", closeClaimModal);
+    if (cancelClaimBtn) cancelClaimBtn.addEventListener("click", closeClaimModal);
+
+    // Close on click outside
+    window.addEventListener("click", (e) => {
+        if (e.target === claimModal) {
+            closeClaimModal();
+        }
+    });
+
+    // Handle Form Submit
+    if (claimForm) {
+        claimForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const submitBtn = claimForm.querySelector("button[type='submit']");
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = "Submitting...";
+            submitBtn.disabled = true;
+
+            const formData = new FormData(claimForm);
+            const itemId = formData.get("item_id");
+            const description = formData.get("description");
+
+            try {
+                const response = await fetch(`${API_BASE}/create_claim.php`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ item_id: itemId, description }),
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(result.message);
+                    closeClaimModal();
+                } else {
+                    alert("Error: " + result.message);
+                }
+            } catch (error) {
+                console.error(error);
+                alert("Failed to submit claim. Please try again.");
+            } finally {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    }
 
     // Attach function to window so onclick works
     window.handleClaim = handleClaim;
@@ -520,11 +615,19 @@ document.addEventListener("DOMContentLoaded", () => {
                         <h3>${item.title}</h3>
                         <p class="item-meta">${item.category_name || 'Uncategorized'} • ${new Date(item.date).toLocaleDateString()}</p>
                         <p class="item-meta">Location: ${item.location}</p>
-                        ${item.item_type && item.item_type.toLowerCase() === 'found' ? `<button onclick="handleClaim(${item.id})" class="btn btn-sm btn-outline" style="margin-top:0.5rem; width:100%">Claim This</button>` : ''}
+                        ${item.item_type && item.item_type.toLowerCase() === 'found' ? `<button onclick="handleClaim('${item.id}')" class="btn btn-sm btn-outline" style="margin-top:0.5rem; width:100%">Claim This</button>` : ''}
                     </div>
                 </article>`;
 
-        const lostItems = items.filter(item => item.item_type && item.item_type.toLowerCase() === 'lost');
+        const lostItems = items.filter(item => {
+            const isLost = item.item_type && item.item_type.toLowerCase() === 'lost';
+            if (!isLost) return false;
+            // If logged in, only show my lost items. If not logged in, show all (or handle as needed)
+            if (currentUserId) {
+                return item.user_id == currentUserId;
+            }
+            return true;
+        });
         const foundItems = items.filter(item => item.item_type && item.item_type.toLowerCase() === 'found');
 
         if (lostItemsGrid) {
@@ -549,7 +652,7 @@ document.addEventListener("DOMContentLoaded", () => {
         fetchItems();
     };
 
-    fetchItems();
+    // fetchItems(); // Moved to after auth check
 
     if (searchInput) {
         searchInput.addEventListener("input", applyFilters);
@@ -557,6 +660,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (categoryFilter) {
         categoryFilter.addEventListener("change", applyFilters);
+    }
+    if (startDateFilter) {
+        startDateFilter.addEventListener("change", applyFilters);
+    }
+    if (endDateFilter) {
+        endDateFilter.addEventListener("change", applyFilters);
     }
 
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

@@ -26,7 +26,8 @@
                             <span class="avatar-text">JD</span>
                         </div>
                         <svg class="chevron-down" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                            <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
                         </svg>
                     </button>
                     <div class="user-dropdown" id="userDropdown">
@@ -42,13 +43,19 @@
                         <div class="dropdown-divider"></div>
                         <a href="profile.html" class="dropdown-item">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <path d="M8 8C9.65685 8 11 6.65685 11 5C11 3.34315 9.65685 2 8 2C6.34315 2 5 3.34315 5 5C5 6.65685 6.34315 8 8 8ZM8 10C5.79086 10 1 11.7909 1 14V15H15V14C15 11.7909 10.2091 10 8 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path
+                                    d="M8 8C9.65685 8 11 6.65685 11 5C11 3.34315 9.65685 2 8 2C6.34315 2 5 3.34315 5 5C5 6.65685 6.34315 8 8 8ZM8 10C5.79086 10 1 11.7909 1 14V15H15V14C15 11.7909 10.2091 10 8 10Z"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
                             </svg>
                             Profile
                         </a>
                         <button class="dropdown-item logout-item" id="logoutBtn">
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <path d="M6 3H12C13.1046 3 14 3.89543 14 5V11C14 12.1046 13.1046 13 12 13H6M6 13L3 10M6 13L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path
+                                    d="M6 3H12C13.1046 3 14 3.89543 14 5V11C14 12.1046 13.1046 13 12 13H6M6 13L3 10M6 13L3 16"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
                             </svg>
                             Logout
                         </button>
@@ -83,18 +90,18 @@
                     <div class="summary-stats">
                         <div>
                             <p class="summary-label">Open Reports</p>
-                            <p class="summary-value">12</p>
+                            <p class="summary-value" id="globalOpenReports">--</p>
                         </div>
                         <div>
                             <p class="summary-label">Matches in Review</p>
-                            <p class="summary-value">4</p>
+                            <p class="summary-value" id="globalMatchesReview">--</p>
                         </div>
                         <div>
                             <p class="summary-label">Awaiting Pickup</p>
-                            <p class="summary-value">3</p>
+                            <p class="summary-value" id="globalAwaitingPickup">--</p>
                         </div>
                     </div>
-                    <p class="muted">Updated 5 minutes ago</p>
+                    <p class="muted" id="lastUpdatedTime">Updated just now</p>
                 </article>
             </div>
         </section>
@@ -104,17 +111,17 @@
                 <div class="dashboard-grid">
                     <article class="metric-card">
                         <p class="metric-label">Reports filed by you</p>
-                        <p class="metric-value">6</p>
+                        <p class="metric-value" id="userReportsCount">--</p>
                         <span class="metric-trend positive">+1 new this week</span>
                     </article>
                     <article class="metric-card">
                         <p class="metric-label">Resolved cases</p>
-                        <p class="metric-value">3</p>
+                        <p class="metric-value" id="userResolvedCount">--</p>
                         <span class="metric-trend neutral">On track</span>
                     </article>
                     <article class="metric-card">
                         <p class="metric-label">Pending verifications</p>
-                        <p class="metric-value">2</p>
+                        <p class="metric-value" id="userPendingCount">--</p>
                         <span class="metric-trend warning">Action needed</span>
                     </article>
                 </div>
