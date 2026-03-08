@@ -71,6 +71,7 @@
             <nav>
                 <a href="#" onclick="showSection('dashboard')">Dashboard</a>
                 <a href="#" onclick="showSection('approvals')" style="margin-left: 1.5rem;">Match Approvals</a>
+                <a href="#" onclick="showSection('claims')" style="margin-left: 1.5rem;">Claim Approvals</a>
                 <a href="#" onclick="showSection('history')" style="margin-left: 1.5rem;">History</a>
                 <a href="#" id="logoutBtn" style="margin-left: 1.5rem; color: var(--red-400);">Logout</a>
             </nav>
@@ -104,6 +105,14 @@
             </div>
         </div>
 
+        <div id="claimsSection" class="hidden">
+            <h1>Claim Approvals</h1>
+            <p class="muted">Review manual ownership claims submitted by users.</p>
+            <div id="claimList" class="approval-list" style="margin-top: 2rem;">
+                <p>Loading pending claims...</p>
+            </div>
+        </div>
+
         <div id="historySection" class="hidden">
             <h1>Claim History</h1>
             <p class="muted">View past approved and rejected claims.</p>
@@ -121,12 +130,17 @@
         function showSection(id) {
             document.getElementById('dashboardSection').classList.add('hidden');
             document.getElementById('approvalsSection').classList.add('hidden');
+            document.getElementById('claimsSection').classList.add('hidden');
             document.getElementById('historySection').classList.add('hidden');
 
             if (id === 'dashboard') document.getElementById('dashboardSection').classList.remove('hidden');
             if (id === 'approvals') {
                 document.getElementById('approvalsSection').classList.remove('hidden');
                 fetchPendingMatches();
+            }
+            if (id === 'claims') {
+                document.getElementById('claimsSection').classList.remove('hidden');
+                fetchPendingClaims();
             }
             if (id === 'history') {
                 document.getElementById('historySection').classList.remove('hidden');
@@ -200,16 +214,17 @@
             list.innerHTML = '<p class="muted">Loading...</p>';
 
             try {
-                const res = await fetch(`${API_BASE}/admin_matches.php?type=history`);
+                // Notice this hits admin_claims.php now to cleanly show manual item claim history properly
+                const res = await fetch(`${API_BASE}/admin_claims.php?type=history`);
                 const data = await res.json();
 
                 if (data.status === 'success') {
-                    if (data.matches.length === 0) {
+                    if (data.claims.length === 0) {
                         list.innerHTML = '<p class="muted">No history found.</p>';
                         return;
                     }
 
-                    list.innerHTML = data.matches.map(match => `
+                    list.innerHTML = data.claims.map(match => `
                         <div class="approval-item">
                             <div class="approval-info">
                                 <h4>${match.title} <span class="badge ${match.status === 'approved' ? 'badge-success' : 'badge-danger'}" style="font-size: 0.8em; padding: 0.2em 0.5em; border-radius: 4px; background: ${match.status === 'approved' ? '#dcfce7; color: #166534' : '#fee2e2; color: #991b1b'};">${match.status === 'approved' ? 'Approved' : 'Rejected'}</span></h4>
@@ -256,7 +271,66 @@
                 if (data.status === 'success') {
                     // Refresh list
                     fetchPendingMatches();
-                    alert(status === 'approved' ? 'Match approved and email sent!' : 'Match rejected.');
+                    alert(status === 'approved' ? 'Match approved!' : 'Match rejected.');
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (err) {
+                alert('Connection error');
+            }
+        }
+
+        async function fetchPendingClaims() {
+            const list = document.getElementById('claimList');
+            list.innerHTML = '<p class="muted">Loading...</p>';
+
+            try {
+                const res = await fetch(`${API_BASE}/admin_claims.php`);
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    if (data.claims.length === 0) {
+                        list.innerHTML = '<p class="muted">No pending claims found.</p>';
+                        return;
+                    }
+
+                    list.innerHTML = data.claims.map(claim => `
+                        <div class="approval-item">
+                            <div class="approval-info">
+                                <h4>Claim for: ${claim.title}</h4>
+                                <p class="muted">Requested by: ${claim.reporter_name} (${claim.reporter_email})</p>
+                                <p class="muted">Proof of Ownership: ${claim.description}</p>
+                                <p class="muted" style="margin-top: 0.5rem; font-size: 0.9em;">Missing Item Type: ${claim.item_type} • Date: ${claim.date}</p>
+                            </div>
+                            <div class="approval-actions">
+                                <button onclick="updateClaimStatus(${claim.claim_id}, 'approved')" class="btn btn-primary btn-sm">Approve</button>
+                                <button onclick="updateClaimStatus(${claim.claim_id}, 'rejected')" class="btn btn-secondary btn-sm">Reject</button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                list.innerHTML = '<p class="error">Failed to load claims.</p>';
+            }
+        }
+
+        async function updateClaimStatus(id, status) {
+            try {
+                const formData = new URLSearchParams();
+                formData.append('claim_id', id);
+                formData.append('status', status);
+
+                const res = await fetch(`${API_BASE}/admin_claims.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
+                });
+                
+                const data = await res.json();
+                
+                if (data.status === 'success') {
+                    fetchPendingClaims();
+                    alert(status === 'approved' ? 'Manual claim approved!' : 'Manual claim rejected.');
                 } else {
                     alert('Error: ' + data.message);
                 }

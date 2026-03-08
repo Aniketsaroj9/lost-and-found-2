@@ -11,9 +11,14 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId = (int)$_SESSION['user_id'];
-$data = lf_get_request_body();
-$itemId = (int)($data['item_id'] ?? 0);
-$description = trim((string)($data['description'] ?? ''));
+$rawInput = file_get_contents('php://input');
+error_log("CREATE_CLAIM RAW: " . $rawInput);
+
+$data = json_decode($rawInput, true) ?: [];
+
+// Fallback to $_POST just in case the frontend sends FormData in the future
+$itemId = (int)($data['item_id'] ?? $_POST['item_id'] ?? 0);
+$description = trim((string)($data['description'] ?? $_POST['description'] ?? ''));
 
 // 2. Validate Inputs
 if (!$itemId || empty($description)) {
