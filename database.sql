@@ -76,6 +76,20 @@ CREATE TABLE IF NOT EXISTS `claims` (
     FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Match Results Table
+CREATE TABLE IF NOT EXISTS `match_results` (
+    `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    `lost_item_id` INT UNSIGNED NOT NULL,
+    `found_item_id` INT UNSIGNED NOT NULL,
+    `text_score` DECIMAL(5,2) NOT NULL,
+    `image_score` DECIMAL(5,2) NOT NULL,
+    `final_score` DECIMAL(5,2) NOT NULL,
+    `match_status` ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`lost_item_id`) REFERENCES `items`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`found_item_id`) REFERENCES `items`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS `idx_items_status` ON `items` (`status`);
 CREATE INDEX IF NOT EXISTS `idx_items_type` ON `items` (`item_type`);

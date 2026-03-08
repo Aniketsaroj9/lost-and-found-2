@@ -154,16 +154,32 @@
                     }
 
                     list.innerHTML = data.matches.map(match => `
-                        <div class="approval-item">
-                            <div class="approval-info">
-                                <h4>${match.title}</h4>
-                                <p class="muted">Reported by: ${match.reporter_name} (${match.reporter_email})</p>
-                                <p class="muted">Type: ${match.item_type} • Date: ${match.date}</p>
-                                <p style="margin-top: 0.5rem;">${match.description}</p>
+                        <div class="approval-item" style="flex-direction: column; align-items: stretch;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem;">
+                                <h4>System Match: <span style="color: var(--primary); font-size: 1.2em;">${match.final_score}%</span></h4>
+                                <div>
+                                    <span style="font-size: 0.9em; color: var(--text-muted); margin-right: 1rem;">Text: ${match.text_score}% | Image: ${match.image_score}%</span>
+                                    <button onclick="updateMatchStatus(${match.match_id}, 'approved')" class="btn btn-primary btn-sm">Approve</button>
+                                    <button onclick="updateMatchStatus(${match.match_id}, 'rejected')" class="btn btn-secondary btn-sm" style="margin-left: 0.5rem;">Reject</button>
+                                </div>
                             </div>
-                            <div class="approval-actions">
-                                <button onclick="approveMatch(${match.id})" class="btn btn-primary btn-sm">Approve</button>
-                                <button onclick="rejectMatch(${match.id})" class="btn btn-secondary btn-sm">Reject</button>
+                            
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                                <!-- Lost Item -->
+                                <div>
+                                    <span class="badge" style="background: var(--red-400); color: white; display: inline-block; margin-bottom: 0.5rem;">LOST ITEM #${match.lost_id}</span>
+                                    <h5>${match.lost_title}</h5>
+                                    <p class="muted" style="margin-bottom: 1rem;">${match.lost_desc}</p>
+                                    ${match.lost_image ? `<img src="${match.lost_image}" style="max-width: 100%; height: 200px; object-fit: cover; border-radius: var(--radius-sm);" alt="Lost Image">` : '<div style="height: 200px; background: var(--border); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); color: var(--text-muted);">No Image</div>'}
+                                </div>
+
+                                <!-- Found Item -->
+                                <div>
+                                    <span class="badge" style="background: var(--green-400); color: white; display: inline-block; margin-bottom: 0.5rem;">FOUND ITEM #${match.found_id}</span>
+                                    <h5>${match.found_title}</h5>
+                                    <p class="muted" style="margin-bottom: 1rem;">${match.found_desc}</p>
+                                    ${match.found_image ? `<img src="${match.found_image}" style="max-width: 100%; height: 200px; object-fit: cover; border-radius: var(--radius-sm);" alt="Found Image">` : '<div style="height: 200px; background: var(--border); display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); color: var(--text-muted);">No Image</div>'}
+                                </div>
                             </div>
                         </div>
                     `).join('');
@@ -223,12 +239,18 @@
 
         async function updateMatchStatus(id, status) {
             try {
+                const formData = new URLSearchParams();
+                formData.append('match_id', id);
+                formData.append('status', status);
+
                 const res = await fetch(`${API_BASE}/admin_matches.php`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id, status })
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData.toString()
                 });
+                
                 const data = await res.json();
+                
                 if (data.status === 'success') {
                     // Refresh list
                     fetchPendingMatches();

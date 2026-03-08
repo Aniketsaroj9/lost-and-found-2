@@ -204,11 +204,8 @@ function handleCreateItem() {
         $conn->begin_transaction();
 
         // 1. Insert Item
-        // Map fields: 
-        // location -> location_lost if type=lost, location_found if type=found
         $locationLost = ($itemType === 'lost') ? $location : null;
         $locationFound = ($itemType === 'found') ? $location : null;
-        // date_lost_found -> $dateTime
         
         $insertQuery = "INSERT INTO items (user_id, category_id, title, description, item_type, location_lost, location_found, date_lost_found) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $conn->prepare($insertQuery);
@@ -233,6 +230,93 @@ function handleCreateItem() {
 
         $conn->commit();
         lf_log("Transaction Committed.");
+
+        // --- MACHINE LEARNING MICROSERVICE INTEGRATION ---
+        try {
+            // Find opposite items to match against
+            // If we just uploaded a 'lost' item, we want to check all 'found' items
+            $targetOppositeType = ($itemType === 'lost') ? 'found' : 'lost';
+
+            // Filter by the same category for optimization, but we can do all. 
+            // We'll pass the last 100 items of the opposite type to the ML service.
+            $oppStmt = $conn->prepare("
+                SELECT i.id, i.title, i.description, ii.image_path 
+                FROM items i 
+                LEFT JOIN item_images ii ON i.id = ii.item_id AND ii.is_primary = 1
+                WHERE i.item_type = ? AND i.status = 'open'
+                ORDER BY i.date_reported DESC
+                LIMIT 100
+            ");
+            $oppStmt->bind_param("s", $targetOppositeType);
+            $oppStmt->execute();
+            $oppResult = $oppStmt->get_result();
+
+            $potentialMatches = [];
+            while ($row = $oppResult->fetch_assoc()) {
+                $potentialMatches[] = $row;
+            }
+
+            if (!empty($potentialMatches)) {
+                // Build payload
+                $payload = [
+                    "target_item" => [
+                        "id" => $itemId,
+                        "title" => $title,
+                        "description" => $description,
+                        "image_path" => $uploadedImagePath,
+                        "type" => $itemType
+                    ],
+                    "potential_matches" => $potentialMatches
+                ];
+
+                // Make cURL Request to Python ML Service
+                $ch = curl_init('http://localhost:5000/match');
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLINFO_HEADER_OUT, true);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: application/json',
+                    'Content-Length: ' . strlen(json_encode($payload))
+                ]);
+                
+                // Very short timeout so we don't block the PHP thread if Python is down
+                curl_setopt($ch, CURLOPT_TIMEOUT, 3); 
+
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+
+                lf_log("ML Service Response: $httpCode - " . substr($response ?? '', 0, 100));
+
+                if ($httpCode === 200 && $response) {
+                    $matchData = json_decode($response, true);
+
+                    if (isset($matchData['status']) && $matchData['status'] === 'success' && !empty($matchData['matches'])) {
+                        
+                        $matchInsert = $conn->prepare("INSERT INTO match_results (lost_item_id, found_item_id, text_score, image_score, final_score) VALUES (?, ?, ?, ?, ?)");
+                        
+                        foreach ($matchData['matches'] as $match) {
+                            $l_id = ($itemType === 'lost') ? $itemId : $match['candidate_id'];
+                            $f_id = ($itemType === 'found') ? $itemId : $match['candidate_id'];
+                            
+                            $t_score = $match['text_score'];
+                            $i_score = $match['image_score'];
+                            $f_score = $match['final_score'];
+
+                            $matchInsert->bind_param("iiddd", $l_id, $f_id, $t_score, $i_score, $f_score);
+                            $matchInsert->execute();
+                        }
+                    }
+                }
+            }
+        } catch (Exception $mlEx) {
+            // Non-fatal error for the user, just log it. 
+            // We still successfully inserted the item.
+            error_log('ML Service integration failed: ' . $mlEx->getMessage());
+            lf_log('ML Service integration failed: ' . $mlEx->getMessage());
+        }
+        // --- END MACHINE LEARNING INTEGRATION ---
 
         lf_send_json(201, [
             'status' => 'success', 
