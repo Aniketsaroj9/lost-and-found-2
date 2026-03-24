@@ -68,3 +68,9 @@ A modern web-based platform designed for campuses and organizations to report, t
 ## 📄 License
 
 This project is open-source and available for educational purposes.
+
+ ML Commands
+
+ cd "C:\xampp\htdocs\lost and found 2\ml_service"
+
+python app.py
