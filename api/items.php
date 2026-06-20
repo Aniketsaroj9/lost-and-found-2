@@ -252,25 +252,31 @@ function handleCreateItem() {
             $oppResult = $oppStmt->get_result();
 
             $potentialMatches = [];
+            $baseUrl = lf_base_url();
             while ($row = $oppResult->fetch_assoc()) {
+                if (!empty($row['image_path'])) {
+                    $row['image_path'] = $baseUrl . '/' . ltrim($row['image_path'], '/');
+                }
                 $potentialMatches[] = $row;
             }
 
             if (!empty($potentialMatches)) {
-                // Build payload
+                // Build payload. Image paths are sent as full public URLs
+                // (not local file paths) since the ML service may be hosted
+                // on a different machine than this PHP app.
                 $payload = [
                     "target_item" => [
                         "id" => $itemId,
                         "title" => $title,
                         "description" => $description,
-                        "image_path" => $uploadedImagePath,
+                        "image_path" => $uploadedImagePath ? $baseUrl . '/' . ltrim($uploadedImagePath, '/') : '',
                         "type" => $itemType
                     ],
                     "potential_matches" => $potentialMatches
                 ];
 
                 // Make cURL Request to Python ML Service
-                $ch = curl_init('http://localhost:5000/match');
+                $ch = curl_init(ML_SERVICE_URL);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLINFO_HEADER_OUT, true);
                 curl_setopt($ch, CURLOPT_POST, true);
@@ -280,8 +286,8 @@ function handleCreateItem() {
                     'Content-Length: ' . strlen(json_encode($payload))
                 ]);
                 
-                // Very short timeout so we don't block the PHP thread if Python is down
-                curl_setopt($ch, CURLOPT_TIMEOUT, 3); 
+                // Slightly longer timeout since this is now a remote network call
+                curl_setopt($ch, CURLOPT_TIMEOUT, 8);
 
                 $response = curl_exec($ch);
                 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

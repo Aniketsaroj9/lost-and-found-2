@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+import requests
 from flask import Flask, request, jsonify
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -26,24 +27,45 @@ def calculate_text_similarity(text1, text2):
         print(f"Text similarity error: {e}")
         return 0.0
 
+def _load_image(path_or_url):
+    """
+    Load an image either from a remote URL (the normal case, since the PHP
+    app and this ML service may run on different machines) or from a local
+    path (fallback for local dev where everything runs on one machine).
+    Returns a grayscale OpenCV image, or None on any failure.
+    """
+    if not path_or_url:
+        return None
+
+    try:
+        if path_or_url.startswith('http://') or path_or_url.startswith('https://'):
+            resp = requests.get(path_or_url, timeout=5)
+            if resp.status_code != 200:
+                print(f"Image fetch failed ({resp.status_code}): {path_or_url}")
+                return None
+            arr = np.frombuffer(resp.content, np.uint8)
+            return cv2.imdecode(arr, cv2.IMREAD_GRAYSCALE)
+        else:
+            full_path = os.path.join(BASE_IMG_DIR, path_or_url)
+            if not os.path.exists(full_path):
+                print(f"Image not found locally: {full_path}")
+                return None
+            return cv2.imread(full_path, cv2.IMREAD_GRAYSCALE)
+    except Exception as e:
+        print(f"Image load error for {path_or_url}: {e}")
+        return None
+
+
 def calculate_image_similarity(img_path1, img_path2):
     """
     Calculate image similarity using OpenCV ORB feature matching.
     """
     if not img_path1 or not img_path2:
         return 0.0
-    
-    full_path1 = os.path.join(BASE_IMG_DIR, img_path1)
-    full_path2 = os.path.join(BASE_IMG_DIR, img_path2)
-
-    if not os.path.exists(full_path1) or not os.path.exists(full_path2):
-        print(f"Image not found. PATH1: {full_path1}, PATH2: {full_path2}")
-        return 0.0
 
     try:
-        # Load images in grayscale
-        img1 = cv2.imread(full_path1, cv2.IMREAD_GRAYSCALE)
-        img2 = cv2.imread(full_path2, cv2.IMREAD_GRAYSCALE)
+        img1 = _load_image(img_path1)
+        img2 = _load_image(img_path2)
 
         if img1 is None or img2 is None:
              return 0.0
@@ -88,6 +110,11 @@ def calculate_image_similarity(img_path1, img_path2):
     except Exception as e:
         print(f"Image similarity error: {e}")
         return 0.0
+
+
+@app.route('/', methods=['GET'])
+def health_check():
+    return jsonify({"status": "ok", "service": "Lost & Found ML Matching Service"}), 200
 
 
 @app.route('/match', methods=['POST'])
@@ -156,5 +183,6 @@ def match_items():
     return jsonify({"status": "success", "matches": results}), 200
 
 if __name__ == '__main__':
-    # Run slightly differently in prod, this is local dev server
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Local dev only — in production this is run via gunicorn (see Procfile)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)

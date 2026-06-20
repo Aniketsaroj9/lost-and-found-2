@@ -5,17 +5,56 @@
 
 declare(strict_types=1);
 
-const DB_HOST = 'localhost';
-const DB_NAME = 'lost_and_found_2';
-const DB_USER = 'root';
-const DB_PASS = '';
+// Load .env file if present (for local dev convenience; in production these
+// should be set as real environment variables by the hosting platform).
+if (file_exists(__DIR__ . '/../.env')) {
+    $lines = file(__DIR__ . '/../.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (str_starts_with(trim($line), '#') || !str_contains($line, '=')) {
+            continue;
+        }
+        [$key, $value] = explode('=', $line, 2);
+        $key = trim($key);
+        $value = trim($value);
+        if (!getenv($key)) {
+            putenv("$key=$value");
+        }
+    }
+}
+
+function lf_env(string $key, string $default = ''): string
+{
+    $value = getenv($key);
+    return $value !== false ? $value : $default;
+}
+
+define('DB_HOST', lf_env('DB_HOST', 'localhost'));
+define('DB_PORT', (int) lf_env('DB_PORT', '3306'));
+define('DB_NAME', lf_env('DB_NAME', 'lost_and_found_2'));
+define('DB_USER', lf_env('DB_USER', 'root'));
+define('DB_PASS', lf_env('DB_PASS', ''));
 
 // SMTP Configuration
-const SMTP_HOST = 'smtp.gmail.com';
-const SMTP_PORT = 587;
-const SMTP_USER = 'aniketsaroj9@gmail.com'; // REPLACE THIS
-const SMTP_PASS = 'wqwv fpxz imvo tspg';    // REPLACE THIS
-const SMTP_FROM = 'noreply@lostandfound.com';
+define('SMTP_HOST', lf_env('SMTP_HOST', 'smtp.gmail.com'));
+define('SMTP_PORT', (int) lf_env('SMTP_PORT', '587'));
+define('SMTP_USER', lf_env('SMTP_USER', ''));
+define('SMTP_PASS', lf_env('SMTP_PASS', ''));
+define('SMTP_FROM', lf_env('SMTP_FROM', 'noreply@lostandfound.com'));
+
+// URL of the Python ML matching microservice
+define('ML_SERVICE_URL', lf_env('ML_SERVICE_URL', 'http://localhost:5000/match'));
+
+/**
+ * Build this app's own public base URL (scheme + host), so relative upload
+ * paths can be turned into full URLs the (potentially remote) ML service
+ * can fetch over HTTP.
+ */
+function lf_base_url(): string
+{
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    return "$scheme://$host";
+}
 
 /**
  * Start a PHP session if one is not already active.
@@ -72,7 +111,7 @@ function lf_get_db_connection(): mysqli
     static $conn = null;
     if ($conn === null) {
         // First try to connect without database to check if MySQL is running
-        $conn = new mysqli(DB_HOST, DB_USER, DB_PASS);
+        $conn = new mysqli(DB_HOST, DB_USER, DB_PASS, '', DB_PORT);
         
         if ($conn->connect_error) {
             error_log('Database connection failed: ' . $conn->connect_error);

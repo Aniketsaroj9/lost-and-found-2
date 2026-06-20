@@ -21,8 +21,8 @@ function lf_send_email(string $to, string $subject, string $message): bool
     
     // 2. SMTP Logic
     try {
-        if (SMTP_USER === 'YOUR_EMAIL@gmail.com') {
-            throw new Exception("SMTP credentials not configured in config.php");
+        if (SMTP_USER === '' || SMTP_PASS === '') {
+            throw new Exception("SMTP credentials not configured. Set SMTP_USER and SMTP_PASS env vars.");
         }
 
         $socket = fsockopen(SMTP_HOST, SMTP_PORT, $errno, $errstr, 15);
