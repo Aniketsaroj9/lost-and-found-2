@@ -15,13 +15,12 @@ COPY . /var/www/html/
 RUN mkdir -p /var/www/html/uploads /var/www/html/logs \
     && chown -R www-data:www-data /var/www/html/uploads /var/www/html/logs
 
-# Configure Apache to use the dynamic PORT variable provided by Railway
-RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf \
-    && sed -i 's/:80>/:${PORT}>/g' /etc/apache2/sites-available/000-default.conf \
-    && echo "export PORT=\${PORT:-8080}" >> /etc/apache2/envvars
+# Copy the entrypoint script to handle runtime PORT
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Railway injects its own $PORT at runtime. Default to 8080.
 ENV PORT=8080
 EXPOSE 8080
 
-CMD ["apache2-foreground"]
+CMD ["entrypoint.sh"]
