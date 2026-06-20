@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS `users` (
     `email` VARCHAR(120) NOT NULL UNIQUE,
     `password_hash` VARCHAR(255) NOT NULL,
     `role` ENUM('user', 'admin') NOT NULL DEFAULT 'user',
+    `phone` VARCHAR(30) DEFAULT NULL,
+    `student_id` VARCHAR(50) DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
