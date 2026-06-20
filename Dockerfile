@@ -3,6 +3,10 @@ FROM php:8.2-apache
 # Install mysqli (needed for MySQL access)
 RUN docker-php-ext-install mysqli
 
+# Ensure exactly one MPM module is enabled (base image sometimes ends up
+# with more than one enabled, which crashes Apache on startup)
+RUN a2dismod mpm_event mpm_worker 2>/dev/null; a2enmod mpm_prefork
+
 # Enable Apache mod_rewrite (harmless even if unused, useful if routes are added later)
 RUN a2enmod rewrite
 
