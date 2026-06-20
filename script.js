@@ -1,10 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
     const AUTH_STORAGE_KEY = "lf:isAuthenticated";
     const PROTECTED_PAGE_SELECTOR = "[data-require-auth-page]";
-    // Dynamically set API_BASE: if we are on localhost, use relative path, otherwise use Railway backend
     const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
         ? "api" 
-        : "https://lost-and-found-2-production.up.railway.app/api";
+        : "https://rare-flexibility-production.up.railway.app/api";
         
     const SESSION_ENDPOINT = `${API_BASE}/session.php`;
     const LOGOUT_ENDPOINT = `${API_BASE}/logout.php`;
