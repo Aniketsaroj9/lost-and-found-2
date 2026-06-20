@@ -17,7 +17,12 @@ RUN mkdir -p /var/www/html/uploads /var/www/html/logs \
 
 # Copy the entrypoint script to handle runtime PORT
 COPY entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
+    && chmod +x /usr/local/bin/entrypoint.sh
+
+# Force exactly one MPM module to be enabled to prevent 'More than one MPM loaded' crash
+RUN a2dismod mpm_event mpm_worker || true \
+    && a2enmod mpm_prefork || true
 
 # Railway injects its own $PORT at runtime. Default to 8080.
 ENV PORT=8080
