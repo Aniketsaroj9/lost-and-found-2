@@ -1,7 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
     const AUTH_STORAGE_KEY = "lf:isAuthenticated";
     const PROTECTED_PAGE_SELECTOR = "[data-require-auth-page]";
-    const API_BASE = "api";
+    // Dynamically set API_BASE: if we are on localhost, use relative path, otherwise use Railway backend
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? "api" 
+        : "https://lost-and-found-2-production.up.railway.app/api";
+        
     const SESSION_ENDPOINT = `${API_BASE}/session.php`;
     const LOGOUT_ENDPOINT = `${API_BASE}/logout.php`;
 
@@ -89,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const refreshAuthState = async () => {
         try {
-            const response = await fetch(SESSION_ENDPOINT, { credentials: "same-origin" });
+            const response = await fetch(SESSION_ENDPOINT, { credentials: "include" });
             if (!response.ok) return;
             const result = await response.json();
             currentUserId = result.user ? result.user.id : null;
@@ -116,7 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 await fetch(LOGOUT_ENDPOINT, {
                     method: "POST",
-                    credentials: "same-origin",
+                    credentials: "include",
                 });
             } catch (error) {
                 console.warn("Logout request failed", error);
@@ -143,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fetchProfileData = async () => {
         try {
             const response = await fetch('api/profile.php', {
-                credentials: 'same-origin'
+                credentials: 'include'
             });
 
             if (!response.ok) {
@@ -331,7 +335,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const fetchDashboardStats = async () => {
         try {
-            const response = await fetch(`${API_BASE}/dashboard_stats.php`, { credentials: 'same-origin' });
+            const response = await fetch(`${API_BASE}/dashboard_stats.php`, { credentials: 'include' });
             if (!response.ok) throw new Error('Failed to fetch stats');
             const result = await response.json();
 

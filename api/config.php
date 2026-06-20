@@ -58,13 +58,28 @@ function lf_base_url(): string
 
 /**
  * Start a PHP session if one is not already active.
+ * Also handles CORS headers for cross-origin requests.
  */
 function lf_start_session(): void
 {
+    // Handle CORS
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
+    header("Access-Control-Allow-Origin: $origin");
+    header("Access-Control-Allow-Credentials: true");
+    header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+
+    // Handle preflight OPTIONS request
+    if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+        http_response_code(200);
+        exit;
+    }
+
     if (session_status() === PHP_SESSION_NONE) {
         session_start([
             'cookie_httponly' => true,
-            'cookie_samesite' => 'Lax',
+            'cookie_samesite' => 'None',
+            'cookie_secure' => true, // Required for SameSite=None
         ]);
     }
 }

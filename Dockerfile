@@ -18,9 +18,13 @@ COPY . /var/www/html/
 RUN mkdir -p /var/www/html/uploads /var/www/html/logs \
     && chown -R www-data:www-data /var/www/html/uploads /var/www/html/logs
 
-# Railway injects its own $PORT at runtime; Apache defaults to listening on
-# 80, so we precisely rewrite just the port directives at container start.
+# Configure Apache to use the dynamic PORT variable provided by Railway
+RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf \
+    && sed -i 's/:80>/:${PORT}>/g' /etc/apache2/sites-available/000-default.conf \
+    && echo "export PORT=\${PORT:-8080}" >> /etc/apache2/envvars
+
+# Railway injects its own $PORT at runtime. Default to 8080.
 ENV PORT=8080
 EXPOSE 8080
 
-CMD ["sh", "-c", "sed -i \"s/Listen 80/Listen ${PORT}/\" /etc/apache2/ports.conf && sed -i \"s/:80>/:${PORT}>/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
+CMD ["apache2-foreground"]

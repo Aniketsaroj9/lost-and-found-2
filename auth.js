@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
     const AUTH_STORAGE_KEY = "lf:isAuthenticated";
-    const API_BASE = "api";
+    // Dynamically set API_BASE: if we are on localhost, use relative path, otherwise use Railway backend
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+        ? "api" 
+        : "https://lost-and-found-2-production.up.railway.app/api";
     const createStorage = () => {
         const tryStore = (getter) => {
             try {
@@ -97,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    credentials: "same-origin",
+                    credentials: "include",
                     body: JSON.stringify(payload),
                 });
                 const result = await response.json();
@@ -160,7 +163,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    credentials: "same-origin",
+                    credentials: "include",
                     body: JSON.stringify(payload),
                 });
                 const result = await response.json();
