@@ -278,6 +278,9 @@ function handleCreateItem() {
                 // Make cURL Request to Python ML Service
                 $ch = curl_init(ML_SERVICE_URL);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_MAXREDIRS, 3);
+                curl_setopt($ch, CURLOPT_POSTREDIR, 3); // keep POST method+body across 301/302/303
                 curl_setopt($ch, CURLINFO_HEADER_OUT, true);
                 curl_setopt($ch, CURLOPT_POST, true);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
