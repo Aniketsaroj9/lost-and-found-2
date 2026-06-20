@@ -1,8 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     const AUTH_STORAGE_KEY = "lf:isAuthenticated";
-    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-        ? "api" 
-        : "https://rare-flexibility-production.up.railway.app/api";
+    const API_BASE = "api";
     const createStorage = () => {
         const tryStore = (getter) => {
             try {

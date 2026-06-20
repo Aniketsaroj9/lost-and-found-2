@@ -1,9 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     const AUTH_STORAGE_KEY = "lf:isAuthenticated";
     const PROTECTED_PAGE_SELECTOR = "[data-require-auth-page]";
-    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-        ? "api" 
-        : "https://rare-flexibility-production.up.railway.app/api";
+    const API_BASE = "api";
         
     const SESSION_ENDPOINT = `${API_BASE}/session.php`;
     const LOGOUT_ENDPOINT = `${API_BASE}/logout.php`;
